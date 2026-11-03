@@ -1,21 +1,29 @@
 // Entry point: the Phaser game configuration and nothing else. Gameplay lives
 // in scenes under src/scenes/.
 
-import { BootScene } from './scenes/BootScene.js';
-import { themeValue } from './theme.js';
+import { TitleScene } from './scenes/TitleScene.js';
+import { LevelSelectScene } from './scenes/LevelSelectScene.js';
+import { ShopScene } from './scenes/ShopScene.js';
+import { GameScene } from './scenes/GameScene.js';
+import { HudScene } from './scenes/HudScene.js';
+import { watchOrientation } from './ui/orientation.js';
 
 // On window so the running game can be inspected from outside the module graph.
 window.game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'stage',
-  backgroundColor: themeValue('--bg'),
+
+  // The game owns its palette (a palace at night), so it does not follow the
+  // system's light and dark mode.
+  backgroundColor: '#080a12',
 
   scale: {
-    // The runtime is a phone-shaped panel that can change size, so the game
-    // fills whatever it is given rather than assuming a fixed resolution.
-    // Scenes read this.scale.gameSize instead of hardcoding width and height.
-    mode: Phaser.Scale.RESIZE,
-    autoCenter: Phaser.Scale.CENTER_BOTH
+    // The game is laid out sideways and sized by hand, so the canvas is always
+    // a landscape shape: ui/orientation.js measures the panel, resizes the game
+    // to the long side across, and turns the canvas when the panel is upright.
+    mode: Phaser.Scale.NONE,
+    width: 800,
+    height: 400
   },
 
   // Arcade physics is set up but idle: gravity is zero until a scene asks for
@@ -35,5 +43,9 @@ window.game = new Phaser.Game({
     activePointers: 3
   },
 
-  scene: [BootScene]
+  // The title screen starts the game; it opens the scroll map or a roof, and
+  // the play scene launches the HUD over itself.
+  scene: [TitleScene, LevelSelectScene, ShopScene, GameScene, HudScene]
 });
+
+watchOrientation(window.game);
