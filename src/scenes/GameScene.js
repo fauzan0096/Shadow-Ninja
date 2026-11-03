@@ -8,7 +8,7 @@
 // band), so the controls can never sit on top of the action.
 
 import { LEVELS, GROUND_H, LEDGE_H } from '../levels/levels.js';
-import { markCleared, recordRun, loadProgress, addGems } from '../levels/progress.js';
+import { markCleared, recordRun, recordEndless, loadProgress, addGems } from '../levels/progress.js';
 import { buildSpriteTextures, createAnimations } from '../art/sprites.js';
 import { buildWorldTextures, buildSky } from '../art/textures.js';
 import { paintScenery, addMist, addFireflies, addEmbers } from '../art/scenery.js';
@@ -66,15 +66,79 @@ function makeRandom(seed) {
   };
 }
 
+// The warlord's hall is a fight, not a rooftop, so an endless run keeps to the
+// twelve roofs before it and starts the loop again one step harder.
+const ENDLESS_ROOFS = LEVELS.length - 1;
+
+function nearAnything(x, level, enemies) {
+  for (const def of enemies) {
+    if (Math.abs(def.x - x) < 110) return true;
+  }
+  for (const spike of level.spikes) {
+    if (Math.abs(spike - x) < 90) return true;
+  }
+  for (const spike of level.trapSpikes) {
+    if (Math.abs(spike - x) < 90) return true;
+  }
+  for (const block of level.blocks) {
+    if (x > block.x - 60 && x < block.x + block.w + 60) return true;
+  }
+  return false;
+}
+
+/// A roof with one guard added for every roof already crossed, each of them
+/// standing on solid ground well clear of the spawn and the far door.
+function endlessLevel(base, stage) {
+  if (stage <= 0) return base;
+
+  const extra = Math.min(6, stage);
+  const enemies = base.enemies.map((def) => ({ ...def }));
+  const random = makeRandom(base.width * 7 + stage * 131);
+
+  for (let i = 0; i < extra; i += 1) {
+    for (let attempt = 0; attempt < 30; attempt += 1) {
+      const span = base.ground[Math.floor(random() * base.ground.length)];
+      if (!span) break;
+
+      const x = span.x + 130 + random() * Math.max(1, span.w - 260);
+
+      if (x < 430 || x > base.width - 220) continue;
+      if (nearAnything(x, base, enemies)) continue;
+
+      enemies.push({
+        x,
+        patrol: Math.min(70, Math.max(30, (span.w - 260) / 2)),
+        speed: 55 + stage * 5,
+        type: 'guard'
+      });
+      break;
+    }
+  }
+
+  return { ...base, enemies };
+}
+
 export class GameScene extends Phaser.Scene {
   constructor() {
     super('Game');
   }
 
-  // The roof to play, passed in when a node on the map is tapped.
+  // The roof to play, passed in when a node on the map is tapped. An endless
+  // run passes the roof it has reached and the metres it has already covered.
   init(data) {
-    const index = data && typeof data.level === 'number' ? data.level : 0;
-    this.levelIndex = Phaser.Math.Clamp(index, 0, LEVELS.length - 1);
+    const payload = data || {};
+
+    this.endless = Boolean(payload.endless);
+    this.endlessRoof = Math.max(0, Math.floor(Number(payload.roof) || 0));
+    this.endlessMetres = Math.max(0, Number(payload.metres) || 0);
+
+    if (this.endless) {
+      this.levelIndex = this.endlessRoof % ENDLESS_ROOFS;
+    } else {
+      const index = typeof payload.level === 'number' ? payload.level : 0;
+      this.levelIndex = Phaser.Math.Clamp(index, 0, LEVELS.length - 1);
+    }
+
     this.level = LEVELS[this.levelIndex];
   }
 
@@ -84,6 +148,14 @@ export class GameScene extends Phaser.Scene {
     buildSpriteTextures(this);
     createAnimations(this);
 
+    // A roof that followed straight from another keeps its music running.
+    this.carryingMusic = false;
+
+    // An endless run sends the same roofs past a little quicker every time, with
+    // one more guard standing on each.
+    this.pace = 1 + Math.min(0.8, this.endlessRoof * 0.06);
+    if (this.endless) this.level = endlessLevel(this.level, this.endlessRoof);
+
     this.physics.world.setBounds(0, 0, this.level.width, this.level.height);
     this.physics.world.gravity.y = GRAVITY;
 
@@ -91,7 +163,7 @@ export class GameScene extends Phaser.Scene {
     const save = loadProgress();
     const upgrades = save.upgrades;
     this.maxLives = SPAWN_LIVES + upgrades.lives;
-    this.lives = this.maxLives;
+    this.lives = this.endless ? 1 : this.maxLives;
     this.dashRecoveryMs = Math.max(0, DASH_RECOVERY_MS - upgrades.dash * 40);
     this.reachBonus = upgrades.reach * 8;
 
@@ -149,10 +221,19 @@ export class GameScene extends Phaser.Scene {
     if (this.level.isBoss) this.buildBoss();
 
     this.registry.set('lives', this.lives);
-    this.registry.set('maxLives', this.maxLives);
+    // An endless run has no lives to show: the HUD puts the score there instead.
+    this.registry.set('maxLives', this.endless ? 0 : this.maxLives);
     this.registry.set('canBlock', this.canBlock);
+    this.registry.set('endless', this.endless);
     this.registry.set('state', 'play');
-    this.registry.set('levelName', this.level.isBoss ? 'THE WARLORD' : this.level.name);
+    this.registry.set(
+      'levelName',
+      this.endless
+        ? `ROOF ${this.endlessRoof + 1} — ${this.level.name}`
+        : this.level.isBoss
+          ? 'THE WARLORD'
+          : this.level.name
+    );
 
     // Every roof has its own weather; the HUD paints it.
     this.weatherKind = weatherForLevel(this.levelIndex);
@@ -166,7 +247,7 @@ export class GameScene extends Phaser.Scene {
     this.scale.on('resize', this.layout, this);
     this.events.once('shutdown', () => {
       this.scale.off('resize', this.layout, this);
-      sound.stopMusic();
+      if (!this.carryingMusic) sound.stopMusic();
       if (this.scene.isActive('Hud')) this.scene.stop('Hud');
     });
 
@@ -391,7 +472,8 @@ export class GameScene extends Phaser.Scene {
       total: this.gemTotal,
       seconds: Math.max(0, (end - this.startedAt) / 1000),
       deaths: this.deaths,
-      shurikens: this.shurikens
+      shurikens: this.shurikens,
+      endless: this.endless ? this.getEndlessScore() : null
     };
   }
 
@@ -510,7 +592,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     for (const blade of this.level.blades) {
-      this.createBlade(blade[0], blade[1], blade[2], blade[3], blade[4], blade[5]);
+      this.createBlade(blade[0], blade[1], blade[2], blade[3], blade[4] / this.pace, blade[5]);
     }
 
     for (const ledge of this.level.crumbles) {
@@ -787,7 +869,7 @@ export class GameScene extends Phaser.Scene {
       enemy.reguardAt = 0;
       enemy.patrolMin = def.x - def.patrol;
       enemy.patrolMax = def.x + def.patrol;
-      enemy.patrolSpeed = def.speed || 0;
+      enemy.patrolSpeed = (def.speed || 0) * this.pace;
       enemy.homeX = def.x;
       enemy.alive = true;
 
@@ -827,7 +909,9 @@ export class GameScene extends Phaser.Scene {
       if (enemy.alive && enemy.type !== 'sword') this.killPlayer();
     });
     if (this.exit) {
-      this.physics.add.overlap(this.player, this.exit, () => this.completeLevel());
+      this.physics.add.overlap(this.player, this.exit, () =>
+        this.endless ? this.advanceRoof() : this.completeLevel()
+      );
     }
     this.physics.add.overlap(this.player, this.gemGroup, (_player, gem) =>
       this.collectGem(gem)
@@ -1672,7 +1756,7 @@ export class GameScene extends Phaser.Scene {
       }
 
       if (time > enemy.nextShotAt) {
-        enemy.nextShotAt = time + 1700;
+        enemy.nextShotAt = time + 1700 / this.pace;
         this.fireArrow(enemy, side);
       }
     }
@@ -1895,6 +1979,15 @@ export class GameScene extends Phaser.Scene {
     this.lives = Math.max(0, this.lives - 1);
     this.registry.set('lives', this.lives);
 
+    if (this.endless) {
+      // One touch ends the run: there is no life to spend and no respawn.
+      sound.stopMusic();
+      this.state = 'gameover';
+      this.finishEndless();
+      this.registry.set('state', 'gameover');
+      return;
+    }
+
     if (this.lives <= 0) {
       sound.stopMusic();
       this.state = 'gameover';
@@ -1941,15 +2034,76 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.flash(180, 10, 12, 24);
   }
 
+  // ------------------------------------------------------------- endless
+
+  /// How an endless run is scored: the roofs crossed plus the ground covered,
+  /// in metres, over the whole run.
+  getEndlessScore() {
+    const travelled = this.player ? Math.max(0, this.player.x - this.level.spawn.x) : 0;
+    const metres = Math.round(this.endlessMetres + travelled / 32);
+
+    return {
+      roofs: this.endlessRoof,
+      metres,
+      score: this.endlessRoof + metres
+    };
+  }
+
+  /// The far door of an endless roof drops straight into the next one.
+  advanceRoof() {
+    if (this.state !== 'play') return;
+
+    this.state = 'advancing';
+
+    const run = this.getEndlessScore();
+
+    sound.play('clear');
+    this.cameras.main.flash(220, 255, 200, 140);
+
+    this.time.delayedCall(220, () => {
+      // The music carries over into the next roof instead of starting again.
+      this.carryingMusic = true;
+      this.scene.restart({
+        endless: true,
+        roof: this.endlessRoof + 1,
+        metres: run.metres
+      });
+    });
+  }
+
+  /// The run is over: file the score, then let the HUD show it.
+  finishEndless() {
+    const run = this.getEndlessScore();
+    const best = recordEndless(run);
+
+    this.registry.set('endlessSummary', {
+      score: run.score,
+      roofs: run.roofs,
+      metres: run.metres,
+      best: best.score,
+      isBest: best.isBest
+    });
+  }
+
   completeLevel(isVictory) {
     if (this.state !== 'play' && this.state !== 'bossdown') return;
+
+    // In an endless run the far door is not an ending but the next roof.
+    if (this.endless) {
+      this.advanceRoof();
+      return;
+    }
 
     this.state = 'complete';
     markCleared(this.levelIndex);
 
     this.finishedAt = this.time.now;
     const stats = this.getRunStats();
-    const best = recordRun(this.levelIndex, { time: stats.seconds, gems: stats.gems });
+    const best = recordRun(this.levelIndex, {
+      time: stats.seconds,
+      gems: stats.gems,
+      deaths: stats.deaths
+    });
 
     this.registry.set('runSummary', {
       gems: stats.gems,
@@ -1999,6 +2153,9 @@ export class GameScene extends Phaser.Scene {
   // level from the beginning, and the small button in the corner restarts it at
   // any time.
   restartLevel() {
+    // An endless run has no retries: it ends where it ends.
+    if (this.endless) return;
+
     this.state = 'play';
     this.lives = this.maxLives;
     this.registry.set('lives', this.lives);

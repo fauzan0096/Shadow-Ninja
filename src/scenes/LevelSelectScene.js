@@ -23,7 +23,7 @@ export class LevelSelectScene extends Phaser.Scene {
     if (this.scene.isActive('Game')) this.scene.stop('Game');
     if (this.scene.isActive('Hud')) this.scene.stop('Hud');
 
-    registerIcons(this, ['lock', 'gem']);
+    registerIcons(this, ['lock', 'gem', 'trophy']);
 
     buildSpriteTextures(this);
 
@@ -60,6 +60,12 @@ export class LevelSelectScene extends Phaser.Scene {
     this.shopPad.setInteractive(new Phaser.Geom.Circle(64, 64, 64), Phaser.Geom.Circle.Contains);
     this.shopIcon = this.add.image(0, 0, 'icon-gem').setDepth(11).setTint(0x8fe8ff);
     this.shopPad.on('pointerdown', () => this.openShop());
+
+    // The records board in the corner opposite the stall.
+    this.recordsPad = this.add.image(0, 0, 'pad').setDepth(10).setAlpha(0.75);
+    this.recordsPad.setInteractive(new Phaser.Geom.Circle(64, 64, 64), Phaser.Geom.Circle.Contains);
+    this.recordsIcon = this.add.image(0, 0, 'icon-trophy').setDepth(11).setTint(0xffd98a);
+    this.recordsPad.on('pointerdown', () => this.openRecords());
 
     this.bankIcon = this.add.image(0, 0, 'icon-gem').setDepth(11).setTint(0x8fe8ff);
     this.bankText = this.add
@@ -143,6 +149,10 @@ export class LevelSelectScene extends Phaser.Scene {
 
   openShop() {
     this.scene.start('Shop');
+  }
+
+  openRecords() {
+    this.scene.start('Records');
   }
 
   toggleHero() {
@@ -242,6 +252,10 @@ export class LevelSelectScene extends Phaser.Scene {
 
     this.shopPad.setPosition(padX, padY).setScale((padSize * 2) / 128);
     this.shopIcon.setScale((padSize * 0.92) / 96).setPosition(padX, padY);
+
+    const recordsX = 16 + padSize;
+    this.recordsPad.setPosition(recordsX, padY).setScale((padSize * 2) / 128);
+    this.recordsIcon.setScale((padSize * 0.92) / 96).setPosition(recordsX, padY);
 
     this.bankIcon.setScale(0.16).setPosition(padX - padSize - 50, padY);
     this.bankText.setFontSize(Math.max(11, Math.round(padSize * 0.34)));

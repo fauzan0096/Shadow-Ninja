@@ -33,6 +33,7 @@ export class TitleScene extends Phaser.Scene {
     // The fighter the player last chose stands by the gate.
     const save = loadProgress();
     const hero = save.hero === 'kunoichi' ? 'kunoichi' : 'ninja';
+    this.bestEndless = save.endless || { score: 0, roofs: 0, metres: 0 };
 
     this.ninja = this.add.sprite(0, 0, hero, 0).setOrigin(0.5, 1).setScale(2.4).setDepth(2);
     this.tweens.add({
@@ -80,6 +81,29 @@ export class TitleScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(3);
+
+    // The second way to play, and the best run it has ever had.
+    this.endlessText = this.add
+      .text(0, 0, 'ENDLESS', {
+        fontFamily: FONT,
+        fontSize: '17px',
+        fontStyle: 'bold',
+        color: '#f6e7e9'
+      })
+      .setOrigin(0.5)
+      .setDepth(3);
+
+    this.bestText = this.add
+      .text(0, 0, this.bestLine(), {
+        fontFamily: FONT,
+        fontSize: '11px',
+        color: '#b98a90'
+      })
+      .setOrigin(0.5)
+      .setDepth(3);
+
+    this.endlessZone = this.add.zone(0, 0, 10, 10).setInteractive();
+    this.endlessZone.on('pointerdown', () => this.startEndless());
 
     this.continueZone = this.add.zone(0, 0, 10, 10).setInteractive();
     this.continueZone.on('pointerdown', () => this.startContinue());
@@ -137,7 +161,7 @@ export class TitleScene extends Phaser.Scene {
     this.gate.fillStyle(0xff2f45, 0.18);
     this.gate.fillRect(gx - 108, top - 8, 216, 3);
 
-    this.ninja.setPosition(width * 0.32, groundY + 4);
+    this.ninja.setPosition(width * 0.2, groundY + 4);
 
     const titleSize = Math.round(Math.min(56, Math.max(24, width * 0.082)));
     this.title.setFontSize(titleSize);
@@ -145,25 +169,37 @@ export class TitleScene extends Phaser.Scene {
 
     // Buttons.
     const primaryW = Math.min(280, width * 0.42);
-    const primaryH = Math.max(44, height * 0.13);
-    const continueY = height * 0.56;
+    const primaryH = Math.max(44, height * 0.125);
+    const continueY = height * 0.5;
 
-    const newW = Math.min(190, width * 0.3);
-    const newH = Math.max(32, height * 0.1);
-    const newY = height * 0.71;
+    const endW = Math.min(200, width * 0.33);
+    const endH = Math.max(36, height * 0.105);
+    const endY = height * 0.632;
+
+    const newW = Math.min(180, width * 0.28);
+    const newH = Math.max(30, height * 0.09);
+    const newY = height * 0.8;
 
     this.buttons.clear();
 
     this.drawButton(width / 2, continueY, primaryW, primaryH, true);
+    this.drawButton(width / 2, endY, endW, endH, false);
     this.drawButton(width / 2, newY, newW, newH, false);
 
-    this.continueText.setFontSize(Math.round(primaryH * 0.42));
+    this.continueText.setFontSize(Math.round(primaryH * 0.44));
     this.continueText.setPosition(width / 2, continueY);
 
-    this.newText.setFontSize(Math.max(10, Math.round(newH * 0.34)));
+    this.endlessText.setFontSize(Math.round(endH * 0.4));
+    this.endlessText.setPosition(width / 2, endY);
+
+    this.bestText.setFontSize(Math.max(9, Math.round(newH * 0.32)));
+    this.bestText.setPosition(width / 2, endY + endH * 0.74);
+
+    this.newText.setFontSize(Math.max(10, Math.round(newH * 0.36)));
     this.newText.setPosition(width / 2, newY);
 
     this.continueZone.setPosition(width / 2, continueY).setSize(primaryW, primaryH);
+    this.endlessZone.setPosition(width / 2, endY).setSize(endW, endH);
     this.newZone.setPosition(width / 2, newY).setSize(newW, newH);
 
     const muteSize = Math.min(46, Math.max(30, width * 0.06));
@@ -181,6 +217,15 @@ export class TitleScene extends Phaser.Scene {
     this.buttons.fillRect(x - w / 2 + 6, y - h / 2 + 4, w - 12, 2);
   }
 
+  /// The best endless run so far, or a word saying there has not been one.
+  bestLine() {
+    if (!this.bestEndless || !this.bestEndless.score) return 'No run yet';
+    return (
+      `Best ${this.bestEndless.score}  ·  ${this.bestEndless.roofs} roofs` +
+      `  ·  ${this.bestEndless.metres} m`
+    );
+  }
+
   startContinue() {
     const progress = loadProgress();
     let target = 0;
@@ -191,6 +236,11 @@ export class TitleScene extends Phaser.Scene {
 
     sound.play('jump');
     this.scene.start('Game', { level: target });
+  }
+
+  startEndless() {
+    sound.play('jump');
+    this.scene.start('Game', { endless: true, roof: 0, metres: 0 });
   }
 
   startNewGame() {

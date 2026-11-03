@@ -4,6 +4,7 @@
 import { TitleScene } from './scenes/TitleScene.js';
 import { LevelSelectScene } from './scenes/LevelSelectScene.js';
 import { ShopScene } from './scenes/ShopScene.js';
+import { RecordsScene } from './scenes/RecordsScene.js';
 import { GameScene } from './scenes/GameScene.js';
 import { HudScene } from './scenes/HudScene.js';
 import { watchOrientation } from './ui/orientation.js';
@@ -45,7 +46,7 @@ window.game = new Phaser.Game({
 
   // The title screen starts the game; it opens the scroll map or a roof, and
   // the play scene launches the HUD over itself.
-  scene: [TitleScene, LevelSelectScene, ShopScene, GameScene, HudScene]
+  scene: [TitleScene, LevelSelectScene, ShopScene, RecordsScene, GameScene, HudScene]
 });
 
 watchOrientation(window.game);

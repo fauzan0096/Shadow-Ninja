@@ -40,7 +40,8 @@ export class HudScene extends Phaser.Scene {
       'clock',
       'star',
       'volume-2',
-      'volume-x'
+      'volume-x',
+      'home'
     ]);
 
     this.controls = new TouchControls(this);
@@ -60,6 +61,9 @@ export class HudScene extends Phaser.Scene {
     this.weatherWidth = 1;
     this.weatherHeight = 1;
 
+    // An endless run has no lives and no retries: its score takes the place of
+    // the hearts, and the restart button is taken away.
+    this.endless = Boolean(this.registry.get('endless'));
     this.maxLives = this.registry.get('maxLives') ?? 3;
 
     this.lifeIcons = [];
@@ -108,6 +112,19 @@ export class HudScene extends Phaser.Scene {
     this.shownTime = '';
     this.runSummary = null;
 
+    // The endless score, standing where the row of lives would be.
+    this.endlessText = this.add
+      .text(0, 0, '', {
+        fontFamily: FONT,
+        fontSize: '14px',
+        fontStyle: 'bold',
+        color: '#f6e7e9'
+      })
+      .setOrigin(0, 0.5)
+      .setDepth(30)
+      .setVisible(this.endless);
+    this.shownEndless = '';
+
     // The warlord's health bar, drawn only when he is in the hall.
     this.bossBar = this.add.graphics().setDepth(40);
     this.bossName = this.add
@@ -138,6 +155,12 @@ export class HudScene extends Phaser.Scene {
     this.restartPad.setInteractive(new Phaser.Geom.Circle(64, 64, 64), Phaser.Geom.Circle.Contains);
     this.restartIcon = this.add.image(0, 0, 'icon-rotate-ccw').setDepth(71).setTint(0xf4efe2);
     this.restartPad.on('pointerdown', () => this.restartLevel());
+
+    if (this.endless) {
+      this.restartPad.setVisible(false);
+      this.restartIcon.setVisible(false);
+      if (this.restartPad.input) this.restartPad.input.enabled = false;
+    }
 
     // Mute, next to restart: the setting is remembered between sessions.
     this.mutePad = this.add.image(0, 0, 'pad').setDepth(70).setAlpha(0.7);
@@ -262,8 +285,11 @@ export class HudScene extends Phaser.Scene {
 
     this.mapPad = this.add.image(0, 0, 'pad').setDepth(62);
     this.mapPad.setInteractive(new Phaser.Geom.Circle(64, 64, 64), Phaser.Geom.Circle.Contains);
-    this.mapIcon = this.add.image(0, 0, 'icon-map').setDepth(63).setTint(0xf4efe2);
-    this.mapPad.on('pointerdown', () => this.goToMap());
+    this.mapIcon = this.add
+      .image(0, 0, this.endless ? 'icon-home' : 'icon-map')
+      .setDepth(63)
+      .setTint(0xf4efe2);
+    this.mapPad.on('pointerdown', () => this.leaveRun());
 
     this.overlayParts = [
       this.scrim,
@@ -285,7 +311,13 @@ export class HudScene extends Phaser.Scene {
 
     for (const part of this.overlayParts) part.setVisible(visible);
 
-    if (this.againPad.input) this.againPad.input.enabled = visible;
+    // A run is final: an endless game over offers no retry.
+    if (visible && this.endless) {
+      this.againPad.setVisible(false);
+      this.againIcon.setVisible(false);
+    }
+
+    if (this.againPad.input) this.againPad.input.enabled = visible && !this.endless;
     if (this.mapPad.input) this.mapPad.input.enabled = visible;
     this.controls.setEnabled(!visible);
   }
@@ -318,6 +350,18 @@ export class HudScene extends Phaser.Scene {
       this.shownShurikens = stats.shurikens;
       this.shurikenText.setText(String(stats.shurikens));
       this.shurikenText.setAlpha(stats.shurikens > 0 ? 1 : 0.4);
+    }
+
+    if (this.endless && stats.endless) {
+      const roofWord = stats.endless.roofs === 1 ? 'roof' : 'roofs';
+      const label =
+        `SCORE ${stats.endless.score}  ·  ${stats.endless.metres} m` +
+        `  ·  ${stats.endless.roofs} ${roofWord}`;
+
+      if (label !== this.shownEndless) {
+        this.shownEndless = label;
+        this.endlessText.setText(label);
+      }
     }
   }
 
@@ -372,6 +416,22 @@ export class HudScene extends Phaser.Scene {
 
   onState(_parent, value) {
     if (value === 'gameover') {
+      if (this.endless) {
+        const run = this.registry.get('endlessSummary');
+        let hint = 'The roofs are lost to you.';
+
+        if (run) {
+          hint =
+            `Score ${run.score}  ·  ${run.metres} m  ·  ${run.roofs} roofs\n` +
+            `Best ${run.best}`;
+
+          if (run.isBest) hint += '  ·  New best';
+        }
+
+        this.showOverlay('Run over', hint);
+        return;
+      }
+
       this.showOverlay('Out of lives', 'The shadows claim this roof.');
     } else if (value === 'complete') {
       const summary = this.runSummary;
@@ -425,6 +485,15 @@ export class HudScene extends Phaser.Scene {
     if (game && game.goToMap) game.goToMap();
   }
 
+  /// Out of an endless run there is only home: back to the title screen.
+  leaveRun() {
+    if (this.endless) {
+      this.scene.start('Title');
+      return;
+    }
+    this.goToMap();
+  }
+
   toggleMute() {
     this.applyMuteIcon(sound.toggleMuted());
   }
@@ -464,6 +533,11 @@ export class HudScene extends Phaser.Scene {
       icon.setPosition(18 + lifeSize / 2 + index * (lifeSize + 7), 20 + lifeSize / 2);
     });
 
+    if (this.endless) {
+      this.endlessText.setFontSize(Math.round(Math.max(11, lifeSize * 0.8)));
+      this.endlessText.setPosition(18, 20 + lifeSize / 2);
+    }
+
     // Gems and clock, under the row of lives.
     const statY = 20 + lifeSize + 18;    const statSize = Math.max(11, Math.round(lifeSize * 0.62));
     this.gemIcon.setScale((statSize * 1.25) / 96).setPosition(22, statY);
@@ -493,7 +567,10 @@ export class HudScene extends Phaser.Scene {
     this.restartPad.setPosition(restartX, restartY).setScale((restartR * 2) / 128);
     this.restartIcon.setScale((restartR * 1.1) / 96).setPosition(restartX, restartY);
 
-    const muteX = restartX - restartR * 2 - 14;
+    // Mute keeps the corner when the restart button is gone.
+    const muteX = this.endless
+      ? width - 18 - restartR
+      : restartX - restartR * 2 - 14;
     this.mutePad.setPosition(muteX, restartY).setScale((restartR * 2) / 128);
     this.muteIcon.setScale((restartR * 1.1) / 96).setPosition(muteX, restartY);
 
@@ -522,8 +599,10 @@ export class HudScene extends Phaser.Scene {
     this.againPad.setPosition(width / 2 - buttonGap, buttonY).setScale((buttonR * 2) / 128);
     this.againIcon.setScale((buttonR * 1.15) / 96).setPosition(width / 2 - buttonGap, buttonY);
 
-    this.mapPad.setPosition(width / 2 + buttonGap, buttonY).setScale((buttonR * 2) / 128);
-    this.mapIcon.setScale((buttonR * 1.15) / 96).setPosition(width / 2 + buttonGap, buttonY);
+    // With no retry to offer, the one button an endless run has sits centred.
+    const mapX = this.endless ? width / 2 : width / 2 + buttonGap;
+    this.mapPad.setPosition(mapX, buttonY).setScale((buttonR * 2) / 128);
+    this.mapIcon.setScale((buttonR * 1.15) / 96).setPosition(mapX, buttonY);
 
     this.levelText.setFontSize(Math.round(Math.min(17, width * 0.042)));
     this.levelText.setPosition(width / 2, 20 + restartR * 2 + 26);

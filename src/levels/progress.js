@@ -3,7 +3,8 @@
 // storage still remembers the session it is in.
 //
 // It holds the cleared roofs, the best run on each of them (fastest time, most
-// gems), the gems banked for the stall, and the three upgrades bought there.
+// gems), the gems banked for the stall, the three upgrades bought there, and the
+// best endless run.
 
 const STORAGE_KEY = 'shadow-ninja-progress';
 
@@ -18,7 +19,8 @@ function emptyProgress() {
     records: {},
     gems: 0,
     upgrades: { lives: 0, dash: 0, reach: 0 },
-    hero: 'ninja'
+    hero: 'ninja',
+    endless: { score: 0, roofs: 0, metres: 0 }
   };
 }
 
@@ -33,7 +35,8 @@ function cloneProgress(progress) {
   Object.keys(progress.records).forEach((key) => {
     records[key] = {
       time: progress.records[key].time,
-      gems: progress.records[key].gems
+      gems: progress.records[key].gems,
+      deaths: progress.records[key].deaths || 0
     };
   });
 
@@ -42,7 +45,8 @@ function cloneProgress(progress) {
     records,
     gems: progress.gems,
     upgrades: { ...progress.upgrades },
-    hero: progress.hero
+    hero: progress.hero,
+    endless: { ...(progress.endless || { score: 0, roofs: 0, metres: 0 }) }
   };
 }
 
@@ -75,6 +79,13 @@ function parseProgress(raw) {
 
   progress.hero = data.hero === 'kunoichi' ? 'kunoichi' : 'ninja';
 
+  const endless = data.endless || {};
+  progress.endless = {
+    score: Math.max(0, Math.floor(Number(endless.score) || 0)),
+    roofs: Math.max(0, Math.floor(Number(endless.roofs) || 0)),
+    metres: Math.max(0, Math.floor(Number(endless.metres) || 0))
+  };
+
   return progress;
 }
 
@@ -87,7 +98,8 @@ function persist() {
         records: cache.records,
         gems: cache.gems,
         upgrades: cache.upgrades,
-        hero: cache.hero
+        hero: cache.hero,
+        endless: cache.endless
       })
     );
   } catch (error) {
@@ -123,24 +135,29 @@ export function markCleared(index) {
   return cloneProgress(progress);
 }
 
-/// Files a finished run against the level's best, keeping the fastest time and
-/// the highest gem count.
+/// Files a finished run against the level's best, keeping the fastest time, the
+/// highest gem count, and the deaths of the run that set that time.
 export function recordRun(index, run) {
   const progress = loadProgress();
   const key = String(index);
   const previous = progress.records[key] || null;
 
-  const time = previous ? Math.min(previous.time, run.time) : run.time;
+  const faster = !previous || run.time < previous.time;
+  const time = faster ? run.time : previous.time;
   const gems = previous ? Math.max(previous.gems, run.gems) : run.gems;
+  const deaths = faster
+    ? Math.max(0, Math.floor(Number(run.deaths) || 0))
+    : Math.max(0, Math.floor(Number(previous.deaths) || 0));
 
-  progress.records[key] = { time, gems };
+  progress.records[key] = { time, gems, deaths };
   cache = progress;
   persist();
 
   return {
     time,
     gems,
-    newTime: !previous || run.time < previous.time,
+    deaths,
+    newTime: faster,
     newGems: !previous || run.gems > previous.gems
   };
 }
@@ -180,6 +197,25 @@ export function setHero(hero) {
   cache = progress;
   persist();
   return cloneProgress(progress);
+}
+
+/// Files an endless run against the best one, keeping the higher score.
+export function recordEndless(run) {
+  const progress = loadProgress();
+  const score = Math.max(0, Math.floor(Number(run.score) || 0));
+  const isBest = score > progress.endless.score;
+
+  if (isBest) {
+    progress.endless = {
+      score,
+      roofs: Math.max(0, Math.floor(Number(run.roofs) || 0)),
+      metres: Math.max(0, Math.floor(Number(run.metres) || 0))
+    };
+    cache = progress;
+    persist();
+  }
+
+  return { ...progress.endless, isBest };
 }
 
 /// Wipes everything: cleared roofs, every best record, the bank and upgrades.
