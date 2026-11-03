@@ -11,6 +11,7 @@ import { LEVELS } from '../levels/levels.js';
 import { loadProgress, isUnlocked, setHero } from '../levels/progress.js';
 import { sound } from '../audio/sound.js';
 import { formatTime } from '../core/format.js';
+import { watchPress, inRect, inCircle } from '../ui/press.js';
 
 const FONT = '-apple-system, system-ui, sans-serif';
 
@@ -85,6 +86,10 @@ export class LevelSelectScene extends Phaser.Scene {
     this.portrait = this.add.image(0, 0, this.hero, 0).setDepth(11).setOrigin(0.5, 0.92);
     this.portraitPad.on('pointerdown', () => this.toggleHero());
 
+    // A raw press is checked against the same buttons, so a node or a corner
+    // pad answers even if the turned screen confused the pointer hit test.
+    watchPress(this, (x, y) => this.pressAt(x, y));
+
     this.scale.on('resize', this.layout, this);
     this.events.once('shutdown', () => {
       this.scale.off('resize', this.layout, this);
@@ -148,15 +153,62 @@ export class LevelSelectScene extends Phaser.Scene {
   }
 
   openShop() {
+    if (!this.guardTap()) return;
+
     this.scene.start('Shop');
   }
 
   openRecords() {
+    if (!this.guardTap()) return;
+
     this.scene.start('Records');
+  }
+
+  /// One action per press, whichever path of input reported it.
+  guardTap() {
+    const now = Date.now();
+    if (now - (this.lastTapAt || 0) < 320) return false;
+    this.lastTapAt = now;
+    return true;
+  }
+
+  pressAt(x, y) {
+    for (const node of this.nodes) {
+      const rect = {
+        x: node.zone.x - node.zone.width / 2,
+        y: node.zone.y - node.zone.height / 2,
+        w: node.zone.width,
+        h: node.zone.height
+      };
+
+      if (inRect(x, y, rect, 6)) {
+        this.pick(node.index);
+        return;
+      }
+    }
+
+    if (this.recordsPad && inCircle(x, y, this.recordsPad.x, this.recordsPad.y, 30)) {
+      this.openRecords();
+      return;
+    }
+
+    if (this.shopPad && inCircle(x, y, this.shopPad.x, this.shopPad.y, 30)) {
+      this.openShop();
+      return;
+    }
+
+    if (
+      this.kunoUnlocked &&
+      this.portraitPad &&
+      inCircle(x, y, this.portraitPad.x, this.portraitPad.y, 30)
+    ) {
+      this.toggleHero();
+    }
   }
 
   toggleHero() {
     if (!this.kunoUnlocked) return;
+    if (!this.guardTap()) return;
 
     this.hero = this.hero === 'ninja' ? 'kunoichi' : 'ninja';
     this.portrait.setTexture(this.hero, 0);
@@ -165,6 +217,8 @@ export class LevelSelectScene extends Phaser.Scene {
   }
 
   pick(index) {
+    if (!this.guardTap()) return;
+
     if (!isUnlocked(index, this.cleared)) {
       this.subtitle.setText('Clear the roof before this one.');
       this.cameras.main.shake(120, 0.004);

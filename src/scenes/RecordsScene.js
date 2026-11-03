@@ -11,6 +11,7 @@ import { LEVELS } from '../levels/levels.js';
 import { loadProgress } from '../levels/progress.js';
 import { formatTime } from '../core/format.js';
 import { sound } from '../audio/sound.js';
+import { watchPress, inCircle } from '../ui/press.js';
 
 const FONT = '-apple-system, system-ui, sans-serif';
 
@@ -90,6 +91,10 @@ export class RecordsScene extends Phaser.Scene {
     this.mapPad.setInteractive(new Phaser.Geom.Circle(64, 64, 64), Phaser.Geom.Circle.Contains);
     this.mapIcon = this.add.image(0, 0, 'icon-map').setDepth(5).setTint(0xf4efe2);
     this.mapPad.on('pointerdown', () => this.backToMap());
+
+    watchPress(this, (x, y) => {
+      if (this.mapPad && inCircle(x, y, this.mapPad.x, this.mapPad.y, 30)) this.backToMap();
+    });
 
     this.scale.on('resize', this.layout, this);
     this.events.once('shutdown', () => {
@@ -273,6 +278,10 @@ export class RecordsScene extends Phaser.Scene {
   }
 
   backToMap() {
+    const now = Date.now();
+    if (now - (this.lastTapAt || 0) < 320) return;
+    this.lastTapAt = now;
+
     sound.play('jump');
     this.scene.start('LevelSelect');
   }

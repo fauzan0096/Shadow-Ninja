@@ -7,6 +7,7 @@ import { buildWorldTextures } from '../art/textures.js';
 import { buildSpriteTextures } from '../art/sprites.js';
 import { LEVELS } from '../levels/levels.js';
 import { loadProgress, isUnlocked, resetProgress } from '../levels/progress.js';
+import { watchPress, inRect, inCircle } from '../ui/press.js';
 import { sound } from '../audio/sound.js';
 
 const FONT = '-apple-system, system-ui, sans-serif';
@@ -110,6 +111,10 @@ export class TitleScene extends Phaser.Scene {
 
     this.newZone = this.add.zone(0, 0, 10, 10).setInteractive();
     this.newZone.on('pointerdown', () => this.startNewGame());
+
+    // Menus also read the raw press, so a button answers even if Phaser's own
+    // pointer hit test misses it on the turned screen.
+    watchPress(this, (x, y) => this.pressAt(x, y));
 
     this.mutePad = this.add.image(0, 0, 'pad').setDepth(4).setAlpha(0.65);
     this.mutePad.setInteractive(new Phaser.Geom.Circle(64, 64, 64), Phaser.Geom.Circle.Contains);
@@ -226,7 +231,52 @@ export class TitleScene extends Phaser.Scene {
     );
   }
 
+  /// The rectangle a button zone covers, for the raw press check.
+  rectOf(zone) {
+    return {
+      x: zone.x - zone.width / 2,
+      y: zone.y - zone.height / 2,
+      w: zone.width,
+      h: zone.height
+    };
+  }
+
+  /// One action per press, whichever path of input reported it.
+  guardTap() {
+    const now = Date.now();
+    if (now - (this.lastTapAt || 0) < 320) return false;
+    this.lastTapAt = now;
+    return true;
+  }
+
+  pressAt(x, y) {
+    if (!this.mutePad) return;
+
+    const muteRadius = (this.mutePad.displayWidth || 0) / 2 + 6;
+
+    if (inCircle(x, y, this.mutePad.x, this.mutePad.y, muteRadius)) {
+      this.toggleMute();
+      return;
+    }
+
+    if (inRect(x, y, this.rectOf(this.continueZone), 8)) {
+      this.startContinue();
+      return;
+    }
+
+    if (inRect(x, y, this.rectOf(this.endlessZone), 8)) {
+      this.startEndless();
+      return;
+    }
+
+    if (inRect(x, y, this.rectOf(this.newZone), 8)) {
+      this.startNewGame();
+    }
+  }
+
   startContinue() {
+    if (!this.guardTap()) return;
+
     const progress = loadProgress();
     let target = 0;
 
@@ -239,11 +289,15 @@ export class TitleScene extends Phaser.Scene {
   }
 
   startEndless() {
+    if (!this.guardTap()) return;
+
     sound.play('jump');
     this.scene.start('Game', { endless: true, roof: 0, metres: 0 });
   }
 
   startNewGame() {
+    if (!this.guardTap()) return;
+
     if (!this.confirmNew) {
       this.confirmNew = true;
       this.newText.setText('TAP AGAIN TO ERASE');
@@ -264,6 +318,8 @@ export class TitleScene extends Phaser.Scene {
   }
 
   toggleMute() {
+    if (!this.guardTap()) return;
+
     this.applyMute(sound.toggleMuted());
   }
 

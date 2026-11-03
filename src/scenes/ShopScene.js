@@ -12,6 +12,7 @@ import {
   MAX_UPGRADE_LEVEL
 } from '../levels/progress.js';
 import { sound } from '../audio/sound.js';
+import { watchPress, inRect, inCircle } from '../ui/press.js';
 
 const FONT = '-apple-system, system-ui, sans-serif';
 
@@ -76,6 +77,10 @@ export class ShopScene extends Phaser.Scene {
       { key: 'dash', label: 'DASH RECHARGE', icon: 'zap' },
       { key: 'reach', label: 'SWORD REACH', icon: reachIcon }
     ].map((config) => this.createCard(config));
+
+    // The stall also reads the raw press, so a card or the map button answers
+    // even if the turned screen confused the pointer hit test.
+    watchPress(this, (x, y) => this.pressAt(x, y));
 
     this.scale.on('resize', this.layout, this);
     this.events.once('shutdown', () => {
@@ -256,7 +261,31 @@ export class ShopScene extends Phaser.Scene {
     }
   }
 
+  /// One action per press, whichever path of input reported it.
+  guardTap() {
+    const now = Date.now();
+    if (now - (this.lastTapAt || 0) < 320) return false;
+    this.lastTapAt = now;
+    return true;
+  }
+
+  pressAt(x, y) {
+    if (this.mapPad && inCircle(x, y, this.mapPad.x, this.mapPad.y, 30)) {
+      this.openMap();
+      return;
+    }
+
+    for (const card of this.cardParts) {
+      if (inRect(x, y, card.rect, 4)) {
+        this.buy(card.key);
+        return;
+      }
+    }
+  }
+
   buy(key) {
+    if (!this.guardTap()) return;
+
     const result = buyUpgrade(key);
 
     if (!result) {
@@ -272,6 +301,8 @@ export class ShopScene extends Phaser.Scene {
   }
 
   openMap() {
+    if (!this.guardTap()) return;
+
     sound.play('jump');
     this.scene.start('LevelSelect');
   }

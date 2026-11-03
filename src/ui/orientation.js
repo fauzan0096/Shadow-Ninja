@@ -82,7 +82,7 @@ export function applyOrientation(game) {
 }
 
 /// Where a page point falls inside the canvas, undoing the CSS turn.
-function canvasPoint(game, pageX, pageY) {
+export function gamePoint(game, pageX, pageY) {
   const canvas = game.canvas;
   const rect = canvas.getBoundingClientRect();
 
@@ -135,7 +135,7 @@ function patchInput(game) {
     p1.x = p0.x;
     p1.y = p0.y;
 
-    const point = canvasPoint(game, pageX, pageY);
+    const point = gamePoint(game, pageX, pageY);
     const smooth = pointer.smoothFactor;
 
     if (!wasMove || smooth === 0) {
