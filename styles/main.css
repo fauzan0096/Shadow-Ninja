@@ -1,19 +1,16 @@
 :root {
-  /* Tells the browser the page handles both, so form controls and scrollbars
-     follow the system too. */
-  color-scheme: light dark;
+  /* The game owns its palette (a palace at night), so the page never switches
+     between light and dark underneath it. */
+  color-scheme: dark;
 
-  --bg: #f4f4f7;
-  --fg: #14161c;
-  --muted: #6b6f7a;
-}
+  /* The phone's own safe areas, read by ui/layout.js so the controls stay clear
+     of the home gesture and the HUD clear of the notch. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #10131a;
-    --fg: #f2f4f8;
-    --muted: #9aa0ad;
-  }
+  --bg: #07040a;
+  --fg: #f2f4f8;
+  --muted: #9aa0ad;
 }
 
 * {
@@ -36,12 +33,19 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Phaser creates the canvas inside this element and sizes it to match. */
-#stage {
-  width: 100%;
-  height: 100%;
-}
-
+/* Phaser creates the canvas inside this element. The canvas is pinned to the
+   panel and never turned: the game follows the phone's own shape, so the engine
+   only ever has to fill the space it is given. These rules sit in the stylesheet
+   as well as in ui/orientation.js so a stale script can never leave a rotated or
+   oversized canvas behind. */
 #stage canvas {
   display: block;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: var(--game-width, 100vw) !important;
+  height: var(--game-height, 100vh) !important;
+  max-width: none !important;
+  max-height: none !important;
+  transform: none !important;
 }

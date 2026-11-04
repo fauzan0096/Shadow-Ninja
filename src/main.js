@@ -5,6 +5,7 @@ import { TitleScene } from './scenes/TitleScene.js';
 import { LevelSelectScene } from './scenes/LevelSelectScene.js';
 import { ShopScene } from './scenes/ShopScene.js';
 import { RecordsScene } from './scenes/RecordsScene.js';
+import { SettingsScene } from './scenes/SettingsScene.js';
 import { GameScene } from './scenes/GameScene.js';
 import { HudScene } from './scenes/HudScene.js';
 import { watchOrientation } from './ui/orientation.js';
@@ -19,9 +20,9 @@ window.game = new Phaser.Game({
   backgroundColor: '#080a12',
 
   scale: {
-    // The game is laid out sideways and sized by hand, so the canvas is always
-    // a landscape shape: ui/orientation.js measures the panel, resizes the game
-    // to the long side across, and turns the canvas when the panel is upright.
+    // The canvas is sized by hand to the panel itself: ui/orientation.js follows
+    // the phone, so the game is upright when the phone is held in portrait and
+    // widens when it is turned, with the same screen on both sides.
     mode: Phaser.Scale.NONE,
     width: 800,
     height: 400
@@ -46,7 +47,7 @@ window.game = new Phaser.Game({
 
   // The title screen starts the game; it opens the scroll map or a roof, and
   // the play scene launches the HUD over itself.
-  scene: [TitleScene, LevelSelectScene, ShopScene, RecordsScene, GameScene, HudScene]
+  scene: [TitleScene, LevelSelectScene, ShopScene, RecordsScene, SettingsScene, GameScene, HudScene]
 });
 
 watchOrientation(window.game);

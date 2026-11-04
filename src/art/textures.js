@@ -217,17 +217,27 @@ function makePad(scene) {
 
   ctx.beginPath();
   ctx.arc(64, 64, 60, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(14,4,8,0.95)';
+  ctx.fillStyle = 'rgba(12,4,9,0.94)';
   ctx.fill();
   ctx.lineWidth = 4;
-  ctx.strokeStyle = 'rgba(255,47,69,0.55)';
+  ctx.strokeStyle = 'rgba(240,180,90,0.5)';
   ctx.stroke();
 
   ctx.beginPath();
   ctx.arc(64, 64, 50, 0, Math.PI * 2);
   ctx.lineWidth = 2;
-  ctx.strokeStyle = 'rgba(255,47,69,0.22)';
+  ctx.strokeStyle = 'rgba(255,51,72,0.26)';
   ctx.stroke();
+
+  // A warm ember glow low in the disc, then a soft gloss across the top half,
+  // so the pad reads as a lit stone button and not a grey widget.
+  const emberGlow = ctx.createRadialGradient(64, 96, 6, 64, 96, 54);
+  emberGlow.addColorStop(0, 'rgba(255,80,90,0.22)');
+  emberGlow.addColorStop(1, 'rgba(255,80,90,0)');
+  ctx.beginPath();
+  ctx.arc(64, 64, 58, 0, Math.PI * 2);
+  ctx.fillStyle = emberGlow;
+  ctx.fill();
 
   // A soft gloss across the top half reads as a lit stone disc.
   const gloss = ctx.createLinearGradient(0, 14, 0, 114);
@@ -419,10 +429,12 @@ function makeGem(scene) {
   const canvas = canvasOf(28, 32);
   const ctx = canvas.getContext('2d');
 
+  // Jade, the one cool colour in the palace: it reads instantly against all the
+  // ember and gold around it without looking like a different game.
   const body = ctx.createLinearGradient(6, 4, 22, 28);
-  body.addColorStop(0, '#d8fbff');
-  body.addColorStop(0.45, '#5fd3f0');
-  body.addColorStop(1, '#1f6f9c');
+  body.addColorStop(0, '#eafff7');
+  body.addColorStop(0.45, '#7fe6c0');
+  body.addColorStop(1, '#1f6f5e');
 
   ctx.beginPath();
   ctx.moveTo(14, 1);
@@ -433,7 +445,7 @@ function makeGem(scene) {
   ctx.fillStyle = body;
   ctx.fill();
   ctx.lineWidth = 2;
-  ctx.strokeStyle = '#0d2a3c';
+  ctx.strokeStyle = '#0a2c26';
   ctx.stroke();
 
   // Facets catching the light.

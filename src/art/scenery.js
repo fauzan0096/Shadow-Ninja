@@ -144,16 +144,36 @@ function drawLayer(kind, g, width, baseY, scale, color, accent, mid) {
   else paintRooftops(g, width, baseY, scale, color, accent, mid);
 }
 
-/// Two silhouette layers behind the level, moving at their own speeds.
+/// Three silhouette layers behind the level, each at its own distance, with a
+/// shaft of moonlight and a haze lying on the roofs between them. The depth is
+/// the point: the furthest layer is hazier and slower, so the rooftops read as
+/// space rather than a painted wall behind the ninja.
 export function paintScenery(scene, level, levelIndex) {
   const kind = SCENERY_BY_LEVEL[levelIndex] || 'rooftops';
   const theme = level.theme;
 
+  const distant = scene.add.graphics().setDepth(-97).setScrollFactor(0.16);
   const far = scene.add.graphics().setDepth(-96).setScrollFactor(0.28);
   const mid = scene.add.graphics().setDepth(-92).setScrollFactor(0.55);
 
+  drawLayer(kind, distant, level.width * 0.16 + 1600, 600, 0.8, theme.far, theme.accent, false);
+  distant.setAlpha(0.5);
+
   drawLayer(kind, far, level.width * 0.28 + 1600, 620, 1, theme.far, theme.accent, false);
   drawLayer(kind, mid, level.width * 0.55 + 1600, 690, 1.4, theme.near, theme.accent, true);
+
+  const shaft = scene.add.graphics().setDepth(-95).setScrollFactor(0.45);
+  shaft.fillStyle(theme.moon, 0.055);
+  shaft.fillTriangle(level.width * 0.22, -80, level.width * 0.34, -80, level.width * 0.04, 760);
+  shaft.fillStyle(theme.moon, 0.035);
+  shaft.fillTriangle(level.width * 0.3, -80, level.width * 0.42, -80, level.width * 0.14, 760);
+
+  scene.add
+    .tileSprite(level.width / 2, level.groundY - 70, level.width, 240, 'mist')
+    .setDepth(-55)
+    .setScrollFactor(0.7)
+    .setAlpha(0.14)
+    .setTint(theme.accent);
 }
 
 /// Slow banks of mist drifting across the middle distance.

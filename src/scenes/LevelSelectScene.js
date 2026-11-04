@@ -12,6 +12,7 @@ import { loadProgress, isUnlocked, setHero } from '../levels/progress.js';
 import { sound } from '../audio/sound.js';
 import { formatTime } from '../core/format.js';
 import { watchPress, inRect, inCircle } from '../ui/press.js';
+import { safeInsets } from '../ui/layout.js';
 
 const FONT = '-apple-system, system-ui, sans-serif';
 
@@ -42,7 +43,7 @@ export class LevelSelectScene extends Phaser.Scene {
         fontFamily: FONT,
         fontSize: '28px',
         fontStyle: 'bold',
-        color: '#f4efe2'
+        color: '#f7ecdd'
       })
       .setOrigin(0.5);
 
@@ -50,7 +51,7 @@ export class LevelSelectScene extends Phaser.Scene {
       .text(0, 0, this.nextLine(), {
         fontFamily: FONT,
         fontSize: '13px',
-        color: '#c9a2a8'
+        color: '#cdb6b6'
       })
       .setOrigin(0.5);
 
@@ -59,7 +60,7 @@ export class LevelSelectScene extends Phaser.Scene {
     // The gem stall, with the banked gems shown beside it.
     this.shopPad = this.add.image(0, 0, 'pad').setDepth(10).setAlpha(0.75);
     this.shopPad.setInteractive(new Phaser.Geom.Circle(64, 64, 64), Phaser.Geom.Circle.Contains);
-    this.shopIcon = this.add.image(0, 0, 'icon-gem').setDepth(11).setTint(0x8fe8ff);
+    this.shopIcon = this.add.image(0, 0, 'icon-gem').setDepth(11).setTint(0xffffff);
     this.shopPad.on('pointerdown', () => this.openShop());
 
     // The records board in the corner opposite the stall.
@@ -68,13 +69,13 @@ export class LevelSelectScene extends Phaser.Scene {
     this.recordsIcon = this.add.image(0, 0, 'icon-trophy').setDepth(11).setTint(0xffd98a);
     this.recordsPad.on('pointerdown', () => this.openRecords());
 
-    this.bankIcon = this.add.image(0, 0, 'icon-gem').setDepth(11).setTint(0x8fe8ff);
+    this.bankIcon = this.add.image(0, 0, 'icon-gem').setDepth(11).setTint(0xffffff);
     this.bankText = this.add
       .text(0, 0, String(this.bank), {
         fontFamily: FONT,
         fontSize: '14px',
         fontStyle: 'bold',
-        color: '#f6e7e9'
+        color: '#f7ecdd'
       })
       .setOrigin(0, 0.5)
       .setDepth(11);
@@ -123,7 +124,7 @@ export class LevelSelectScene extends Phaser.Scene {
         fontFamily: FONT,
         fontSize: '24px',
         fontStyle: 'bold',
-        color: '#f4efe2'
+        color: '#f7ecdd'
       })
       .setOrigin(0.5);
 
@@ -302,7 +303,7 @@ export class LevelSelectScene extends Phaser.Scene {
     // The stall button in the corner, with the banked gems beside it.
     const padSize = Math.min(44, Math.max(28, width * 0.055));
     const padX = width - 16 - padSize;
-    const padY = 18 + padSize;
+    const padY = safeInsets().top + 18 + padSize;
 
     this.shopPad.setPosition(padX, padY).setScale((padSize * 2) / 128);
     this.shopIcon.setScale((padSize * 0.92) / 96).setPosition(padX, padY);

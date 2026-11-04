@@ -8,6 +8,8 @@ import { buildSpriteTextures } from '../art/sprites.js';
 import { LEVELS } from '../levels/levels.js';
 import { loadProgress, isUnlocked, resetProgress } from '../levels/progress.js';
 import { watchPress, inRect, inCircle } from '../ui/press.js';
+import { safeInsets } from '../ui/layout.js';
+import { COLORS, drawStoneButton } from '../ui/style.js';
 import { sound } from '../audio/sound.js';
 
 const FONT = '-apple-system, system-ui, sans-serif';
@@ -23,7 +25,7 @@ export class TitleScene extends Phaser.Scene {
 
     buildWorldTextures(this);
     buildSpriteTextures(this);
-    registerIcons(this, ['volume-2', 'volume-x']);
+    registerIcons(this, ['volume-2', 'volume-x', 'settings', 'share-2']);
 
     this.confirmNew = false;
 
@@ -51,7 +53,7 @@ export class TitleScene extends Phaser.Scene {
         fontFamily: FONT,
         fontSize: '44px',
         fontStyle: 'bold',
-        color: '#f6e7e9'
+        color: '#f7ecdd'
       })
       .setOrigin(0.5)
       .setDepth(3);
@@ -63,13 +65,14 @@ export class TitleScene extends Phaser.Scene {
     });
 
     this.buttons = this.add.graphics().setDepth(2);
+    this.titleRule = this.add.graphics().setDepth(3);
 
     this.continueText = this.add
       .text(0, 0, 'CONTINUE', {
         fontFamily: FONT,
         fontSize: '19px',
         fontStyle: 'bold',
-        color: '#f6e7e9'
+        color: '#f7ecdd'
       })
       .setOrigin(0.5)
       .setDepth(3);
@@ -78,7 +81,7 @@ export class TitleScene extends Phaser.Scene {
       .text(0, 0, 'NEW GAME', {
         fontFamily: FONT,
         fontSize: '13px',
-        color: '#d8aeb4'
+        color: '#cdb6b6'
       })
       .setOrigin(0.5)
       .setDepth(3);
@@ -89,7 +92,7 @@ export class TitleScene extends Phaser.Scene {
         fontFamily: FONT,
         fontSize: '17px',
         fontStyle: 'bold',
-        color: '#f6e7e9'
+        color: '#f7ecdd'
       })
       .setOrigin(0.5)
       .setDepth(3);
@@ -98,7 +101,7 @@ export class TitleScene extends Phaser.Scene {
       .text(0, 0, this.bestLine(), {
         fontFamily: FONT,
         fontSize: '11px',
-        color: '#b98a90'
+        color: '#a98f95'
       })
       .setOrigin(0.5)
       .setDepth(3);
@@ -112,6 +115,22 @@ export class TitleScene extends Phaser.Scene {
     this.newZone = this.add.zone(0, 0, 10, 10).setInteractive();
     this.newZone.on('pointerdown', () => this.startNewGame());
 
+    // Settings, written out under the menu so it is never hard to find.
+    this.settingsButton = this.add.graphics().setDepth(2);
+    this.settingsMenuIcon = this.add.image(0, 0, 'icon-settings').setDepth(3).setTint(0xf4efe2);
+    this.settingsMenuText = this.add
+      .text(0, 0, 'SETTINGS', {
+        fontFamily: FONT,
+        fontSize: '13px',
+        fontStyle: 'bold',
+        color: '#cdb6b6'
+      })
+      .setOrigin(0.5)
+      .setDepth(3);
+
+    this.settingsMenuZone = this.add.zone(0, 0, 10, 10).setInteractive();
+    this.settingsMenuZone.on('pointerdown', () => this.openSettings());
+
     // Menus also read the raw press, so a button answers even if Phaser's own
     // pointer hit test misses it on the turned screen.
     watchPress(this, (x, y) => this.pressAt(x, y));
@@ -121,6 +140,30 @@ export class TitleScene extends Phaser.Scene {
     this.muteIcon = this.add.image(0, 0, 'icon-volume-2').setDepth(5).setTint(0xf4efe2);
     this.mutePad.on('pointerdown', () => this.toggleMute());
 
+    // Settings and share sit above the speaker, in the same corner.
+    this.settingsPad = this.add.image(0, 0, 'pad').setDepth(4).setAlpha(0.6);
+    this.settingsPad.setInteractive(new Phaser.Geom.Circle(64, 64, 64), Phaser.Geom.Circle.Contains);
+    this.settingsIcon = this.add.image(0, 0, 'icon-settings').setDepth(5).setTint(0xf4efe2);
+    this.settingsPad.on('pointerdown', () => this.openSettings());
+
+    if (!this.textures.exists('icon-settings')) this.settingsIcon.setVisible(false);
+    if (!this.textures.exists('icon-settings')) this.settingsMenuIcon.setVisible(false);
+
+    this.sharePad = this.add.image(0, 0, 'pad').setDepth(4).setAlpha(0.6);
+    this.sharePad.setInteractive(new Phaser.Geom.Circle(64, 64, 64), Phaser.Geom.Circle.Contains);
+    this.shareIcon = this.add.image(0, 0, 'icon-share-2').setDepth(5).setTint(0xf4efe2);
+    this.sharePad.on('pointerdown', () => this.shareGame());
+
+    this.toast = this.add
+      .text(0, 0, '', {
+        fontFamily: FONT,
+        fontSize: '11px',
+        color: '#ffd98a'
+      })
+      .setOrigin(0.5)
+      .setDepth(6)
+      .setAlpha(0);
+
     this.applyMute(sound.isMuted());
 
     this.scale.on('resize', this.layout, this);
@@ -129,6 +172,7 @@ export class TitleScene extends Phaser.Scene {
     });
 
     this.layout(this.scale.gameSize);
+    this.playIntro();
     sound.playMusic('palace');
   }
 
@@ -140,86 +184,130 @@ export class TitleScene extends Phaser.Scene {
     const { width, height } = gameSize;
     if (!width || !height) return;
 
-    const groundY = Math.round(height * 0.76);
+    const insets = safeInsets();
+    const portrait = height > width * 1.05;
+    const top = insets.top;
+    const groundY = Math.round(height * (portrait ? 0.87 : 0.78));
 
     this.backdrop.clear();
-    this.backdrop.fillGradientStyle(0x060306, 0x060306, 0x23080e, 0x120407, 1);
+    this.backdrop.fillGradientStyle(0x08040a, 0x08040a, 0x26090f, 0x120407, 1);
     this.backdrop.fillRect(0, 0, width, height);
 
     this.backdrop.fillStyle(0x0d0508, 1);
     this.backdrop.fillRect(0, groundY, width, height - groundY);
-    this.backdrop.fillStyle(0xff2f45, 0.22);
+    this.backdrop.fillStyle(COLORS.gold, 0.3);
     this.backdrop.fillRect(0, groundY, width, 2);
 
-    this.moon.setPosition(width * 0.82, height * 0.2).setScale(Math.max(2, width / 320));
+    this.moon
+      .setPosition(width * (portrait ? 0.78 : 0.84), top + height * 0.1)
+      .setScale(Math.max(2, width / 320));
 
-    // The gate the ninja stands by.
-    const gx = width * 0.63;
-    const top = groundY - Math.min(height * 0.6, 250);
+    // The gate the ninja stands by, kept off the column of buttons.
+    const gx = width * (portrait ? 0.85 : 0.64);
+    const gateScale = portrait ? 0.7 : 1;
+    const gateTop = groundY - Math.min(height * (portrait ? 0.34 : 0.62), 260);
 
     this.gate.clear();
     this.gate.fillStyle(0x1a060b, 1);
-    this.gate.fillRect(gx - 82, top, 16, groundY - top);
-    this.gate.fillRect(gx + 66, top, 16, groundY - top);
-    this.gate.fillRect(gx - 108, top - 8, 216, 14);
-    this.gate.fillRect(gx - 92, top + 32, 184, 10);
-    this.gate.fillStyle(0xff2f45, 0.18);
-    this.gate.fillRect(gx - 108, top - 8, 216, 3);
+    this.gate.fillRect(gx - 82 * gateScale, gateTop, 16 * gateScale, groundY - gateTop);
+    this.gate.fillRect(gx + 66 * gateScale, gateTop, 16 * gateScale, groundY - gateTop);
+    this.gate.fillRect(gx - 108 * gateScale, gateTop - 8, 216 * gateScale, 14);
+    this.gate.fillRect(gx - 92 * gateScale, gateTop + 32, 184 * gateScale, 10);
+    this.gate.fillStyle(COLORS.ember, 0.2);
+    this.gate.fillRect(gx - 108 * gateScale, gateTop - 8, 216 * gateScale, 3);
 
-    this.ninja.setPosition(width * 0.2, groundY + 4);
+    this.ninja
+      .setScale(portrait ? 1.7 : 2.4)
+      .setPosition(width * (portrait ? 0.22 : 0.2), groundY + 4);
 
-    const titleSize = Math.round(Math.min(56, Math.max(24, width * 0.082)));
-    this.title.setFontSize(titleSize);
-    this.title.setPosition(width / 2, height * 0.17);
+    const titleSize = Math.round(
+      Math.min(portrait ? 44 : 56, Math.max(24, width * (portrait ? 0.115 : 0.082)))
+    );
+    this.title.setFontSize(titleSize).setPosition(width / 2, top + titleSize * 1.2);
 
-    // Buttons.
-    const primaryW = Math.min(280, width * 0.42);
-    const primaryH = Math.max(44, height * 0.125);
-    const continueY = height * 0.5;
+    // A thin gold rule under the title, so the top of the screen has weight.
+    this.titleRule.clear();
+    const ruleW = Math.min(width * 0.5, 220);
+    this.titleRule.fillStyle(COLORS.gold, 0.5);
+    this.titleRule.fillRect(width / 2 - ruleW / 2, this.title.y + titleSize * 0.72, ruleW, 1.5);
 
-    const endW = Math.min(200, width * 0.33);
-    const endH = Math.max(36, height * 0.105);
-    const endY = height * 0.632;
+    // Buttons: a column down the middle, sized to the panel.
+    const primaryW = Math.min(portrait ? 320 : 300, width * (portrait ? 0.82 : 0.44));
+    const primaryH = Math.max(48, Math.min(height * (portrait ? 0.11 : 0.136), 78));
+    const endW = Math.min(portrait ? 250 : 210, width * (portrait ? 0.64 : 0.34));
+    const endH = Math.max(40, Math.min(height * (portrait ? 0.085 : 0.115), 62));
+    const newW = Math.min(portrait ? 200 : 180, width * (portrait ? 0.54 : 0.3));
+    const newH = Math.max(34, Math.min(height * (portrait ? 0.07 : 0.095), 52));
 
-    const newW = Math.min(180, width * 0.28);
-    const newH = Math.max(30, height * 0.09);
-    const newY = height * 0.8;
+    const gap = Math.max(9, Math.min(18, height * 0.022));
+    const continueY = Math.round(height * (portrait ? 0.46 : 0.44));
+    const endY = continueY + primaryH / 2 + gap + endH / 2;
+    const newY = endY + endH / 2 + gap + newH / 2;
+
+    const setW = Math.min(portrait ? 200 : 176, width * (portrait ? 0.52 : 0.28));
+    const setH = Math.max(32, Math.min(height * (portrait ? 0.062 : 0.085), 46));
+    const settingsY = newY + newH / 2 + gap + setH / 2;
 
     this.buttons.clear();
-
     this.drawButton(width / 2, continueY, primaryW, primaryH, true);
     this.drawButton(width / 2, endY, endW, endH, false);
     this.drawButton(width / 2, newY, newW, newH, false);
 
-    this.continueText.setFontSize(Math.round(primaryH * 0.44));
-    this.continueText.setPosition(width / 2, continueY);
+    drawStoneButton(this.settingsButton, width / 2, settingsY, setW, setH, {});
 
-    this.endlessText.setFontSize(Math.round(endH * 0.4));
-    this.endlessText.setPosition(width / 2, endY);
+    const settingsFont = Math.max(10, Math.round(Math.min(setH * 0.36, setW * 0.16)));
+    this.settingsMenuText.setFontSize(settingsFont).setPosition(width / 2 + setH * 0.3, settingsY);
+    this.settingsMenuIcon
+      .setScale((setH * 0.42) / 96)
+      .setPosition(width / 2 - this.settingsMenuText.width / 2 - setH * 0.36, settingsY);
 
-    this.bestText.setFontSize(Math.max(9, Math.round(newH * 0.32)));
-    this.bestText.setPosition(width / 2, endY + endH * 0.74);
+    this.settingsMenuZone.setPosition(width / 2, settingsY).setSize(setW, setH);
 
-    this.newText.setFontSize(Math.max(10, Math.round(newH * 0.36)));
-    this.newText.setPosition(width / 2, newY);
+    this.continueText
+      .setFontSize(Math.round(Math.min(primaryH * 0.42, primaryW * 0.17)))
+      .setPosition(width / 2, continueY);
+
+    this.endlessText
+      .setFontSize(Math.round(Math.min(endH * 0.4, endW * 0.17)))
+      .setPosition(width / 2, endY);
+
+    this.newText
+      .setFontSize(Math.max(10, Math.round(Math.min(newH * 0.4, newW * 0.18))))
+      .setPosition(width / 2, newY);
+
+    this.bestText
+      .setFontSize(Math.max(9, Math.min(12, Math.round(width * 0.028))))
+      .setPosition(width / 2, settingsY + setH / 2 + Math.max(10, height * 0.018));
 
     this.continueZone.setPosition(width / 2, continueY).setSize(primaryW, primaryH);
     this.endlessZone.setPosition(width / 2, endY).setSize(endW, endH);
     this.newZone.setPosition(width / 2, newY).setSize(newW, newH);
 
-    const muteSize = Math.min(46, Math.max(30, width * 0.06));
-    this.mutePad.setPosition(width - muteSize, height - muteSize).setScale((muteSize * 2) / 128);
-    this.muteIcon.setScale((muteSize * 0.95) / 96).setPosition(width - muteSize, height - muteSize);
+    const muteSize = Math.min(44, Math.max(28, width * 0.06));
+    const corner = Math.min(40, Math.max(26, width * 0.07));
+    const cornerX = width - Math.max(muteSize, corner) - 8;
+    const muteY = height - insets.bottom - muteSize - 10;
+    const cornerSettingsY = muteY - muteSize * 2.05;
+    const shareY = cornerSettingsY - corner * 2.05;
+
+    this.mutePad.setPosition(cornerX, muteY).setScale((muteSize * 2) / 128);
+    this.muteIcon.setScale((muteSize * 0.95) / 96).setPosition(cornerX, muteY);
+
+    this.settingsPad.setPosition(cornerX, cornerSettingsY).setScale((corner * 2) / 128);
+    this.settingsIcon
+      .setScale((corner * 1.05) / 96)
+      .setPosition(cornerX, cornerSettingsY);
+
+    this.sharePad.setPosition(cornerX, shareY).setScale((corner * 2) / 128);
+    this.shareIcon.setScale((corner * 1.0) / 96).setPosition(cornerX, shareY);
+
+    this.toast.setFontSize(Math.max(10, Math.round(width * 0.028)));
+    this.toast.setPosition(width / 2, muteY - 18);
   }
 
-  /// A plain rounded stone button.
+  /// A dark stone button with the palace's gold hairline.
   drawButton(x, y, w, h, primary) {
-    this.buttons.fillStyle(primary ? 0x2a0a12 : 0x160609, primary ? 0.97 : 0.9);
-    this.buttons.fillRoundedRect(x - w / 2, y - h / 2, w, h, 10);
-    this.buttons.lineStyle(2, primary ? 0xff2f45 : 0x8a2024, primary ? 0.85 : 0.6);
-    this.buttons.strokeRoundedRect(x - w / 2, y - h / 2, w, h, 10);
-    this.buttons.fillStyle(0xff2f45, primary ? 0.18 : 0.1);
-    this.buttons.fillRect(x - w / 2 + 6, y - h / 2 + 4, w - 12, 2);
+    drawStoneButton(this.buttons, x, y, w, h, { primary });
   }
 
   /// The best endless run so far, or a word saying there has not been one.
@@ -271,6 +359,21 @@ export class TitleScene extends Phaser.Scene {
 
     if (inRect(x, y, this.rectOf(this.newZone), 8)) {
       this.startNewGame();
+      return;
+    }
+
+    if (this.settingsMenuZone && inRect(x, y, this.rectOf(this.settingsMenuZone), 8)) {
+      this.openSettings();
+      return;
+    }
+
+    if (this.settingsPad && inCircle(x, y, this.settingsPad.x, this.settingsPad.y, 30)) {
+      this.openSettings();
+      return;
+    }
+
+    if (this.sharePad && inCircle(x, y, this.sharePad.x, this.sharePad.y, 30)) {
+      this.shareGame();
     }
   }
 
@@ -301,7 +404,7 @@ export class TitleScene extends Phaser.Scene {
     if (!this.confirmNew) {
       this.confirmNew = true;
       this.newText.setText('TAP AGAIN TO ERASE');
-      this.newText.setColor('#ff7a8a');
+      this.newText.setColor('#ff8b98');
       this.time.delayedCall(3000, () => this.resetNewGame());
       return;
     }
@@ -314,7 +417,7 @@ export class TitleScene extends Phaser.Scene {
   resetNewGame() {
     this.confirmNew = false;
     this.newText.setText('NEW GAME');
-    this.newText.setColor('#d8aeb4');
+    this.newText.setColor('#cdb6b6');
   }
 
   toggleMute() {
@@ -327,5 +430,124 @@ export class TitleScene extends Phaser.Scene {
     this.muteIcon.setTexture(muted ? 'icon-volume-x' : 'icon-volume-2');
     this.muteIcon.setAlpha(muted ? 0.4 : 1);
     this.mutePad.setAlpha(muted ? 0.4 : 0.65);
+  }
+
+  openSettings() {
+    if (!this.guardTap()) return;
+
+    sound.play('jump');
+    this.scene.start('Settings');
+  }
+
+  /// Hands the game to the phone's own share sheet, or copies the link.
+  shareGame() {
+    if (!this.guardTap()) return;
+
+    const url = window.location.href;
+    const data = {
+      title: 'Shadow Ninja',
+      text: 'Shadow Ninja — a rooftop ninja platformer.',
+      url
+    };
+
+    if (navigator.share) {
+      navigator.share(data).catch(() => {
+        // A cancelled share is not worth reporting.
+      });
+      return;
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard
+        .writeText(url)
+        .then(() => this.showToast('Link copied'))
+        .catch(() => this.showToast('Copy it from the address bar'));
+      return;
+    }
+
+    this.showToast(url);
+  }
+
+  showToast(message) {
+    this.toast.setText(message).setAlpha(0);
+    this.tweens.killTweensOf(this.toast);
+    this.tweens.add({ targets: this.toast, alpha: 1, duration: 180, hold: 1500, yoyo: true });
+  }
+
+  /// The opening shot: the dark lifts off the gate, the title settles into
+  /// place, and the menu rises under it. It plays once per session.
+  playIntro() {
+    if (this.registry.get('introPlayed')) return;
+    this.registry.set('introPlayed', true);
+
+    const { width, height } = this.scale.gameSize;
+
+    const veil = this.add.graphics().setDepth(92);
+    veil.fillStyle(0x040206, 1);
+    veil.fillRect(0, 0, width, height);
+
+    const titleScale = this.title.scaleX || 1;
+    this.title.setAlpha(0).setScale(titleScale * 1.35);
+    this.tweens.add({
+      targets: this.title,
+      alpha: 1,
+      scale: titleScale,
+      duration: 900,
+      delay: 320,
+      ease: 'Cubic.easeOut'
+    });
+
+    this.ninja.setAlpha(0);
+    this.tweens.add({ targets: this.ninja, alpha: 1, duration: 500, delay: 420 });
+
+    const rising = [
+      this.continueText,
+      this.endlessText,
+      this.newText,
+      this.bestText,
+      this.buttons,
+      this.titleRule,
+      this.settingsButton,
+      this.settingsMenuText,
+      this.settingsMenuIcon
+    ];
+
+    for (const object of rising) object.setAlpha(0);
+    this.tweens.add({
+      targets: rising,
+      alpha: 1,
+      duration: 800,
+      delay: 720,
+      ease: 'Sine.easeOut'
+    });
+
+    // A lantern bloom behind the palace as the dark lifts, then a soft glow.
+    const bloom = this.add
+      .image(width / 2, height * 0.55, 'glow')
+      .setDepth(1)
+      .setTint(0xffb066)
+      .setScale(0.4)
+      .setAlpha(0);
+
+    this.tweens.add({
+      targets: bloom,
+      alpha: 0.32,
+      scale: 2.4,
+      duration: 1300,
+      delay: 200,
+      ease: 'Sine.easeOut',
+      onComplete: () => {
+        this.tweens.add({ targets: bloom, alpha: 0.1, duration: 900 });
+      }
+    });
+
+    this.tweens.add({
+      targets: veil,
+      alpha: 0,
+      duration: 900,
+      delay: 160,
+      ease: 'Sine.easeIn',
+      onComplete: () => veil.destroy()
+    });
   }
 }

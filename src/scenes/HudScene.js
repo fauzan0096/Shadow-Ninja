@@ -8,6 +8,7 @@
 import { registerIcons } from '../icons.js';
 import { TouchControls } from '../ui/TouchControls.js';
 import { computeLayout } from '../ui/layout.js';
+import { COLORS } from '../ui/style.js';
 import { sound } from '../audio/sound.js';
 import { formatTime } from '../core/format.js';
 import { weatherIntensity } from '../art/weather.js';
@@ -79,7 +80,7 @@ export class HudScene extends Phaser.Scene {
         fontFamily: FONT,
         fontSize: '16px',
         fontStyle: 'bold',
-        color: '#f4efe2'
+        color: '#f7ecdd'
       })
       .setOrigin(0.5)
       .setDepth(32)
@@ -96,7 +97,7 @@ export class HudScene extends Phaser.Scene {
     }
 
     // The run's gems and clock, under the lives.
-    this.gemIcon = this.add.image(0, 0, 'icon-gem').setDepth(30).setTint(0x8fe8ff);
+    this.gemIcon = this.add.image(0, 0, 'icon-gem').setDepth(30);
     this.gemText = this.add
       .text(0, 0, '0/0', { fontFamily: FONT, fontSize: '13px', fontStyle: 'bold', color: '#e9e4f2' })
       .setOrigin(0, 0.5)
@@ -118,7 +119,7 @@ export class HudScene extends Phaser.Scene {
         fontFamily: FONT,
         fontSize: '14px',
         fontStyle: 'bold',
-        color: '#f6e7e9'
+        color: '#f7ecdd'
       })
       .setOrigin(0, 0.5)
       .setDepth(30)
@@ -145,7 +146,7 @@ export class HudScene extends Phaser.Scene {
         fontFamily: FONT,
         fontSize: '12px',
         fontStyle: 'bold',
-        color: '#ffe6a8'
+        color: '#ffd98a'
       })
       .setOrigin(0.5)
       .setDepth(32);
@@ -509,37 +510,43 @@ export class HudScene extends Phaser.Scene {
     if (!width || !height) return;
 
     const geometry = computeLayout(width, height);
+    const insets = geometry.insets;
     this.controls.layout(gameSize);
 
-    // The reserved band, drawn as a stone ledge with a lit edge so it reads as
-    // part of the palace rather than a browser widget.
-    const bandTop = height - geometry.band;
+    // The reserved band, drawn as a stone ledge with a lit gold edge so it reads
+    // as part of the palace rather than a browser widget. It stops above the
+    // phone's home gesture, and the HUD starts below the notch.
+    const bandTop = geometry.playHeight;
+    const bandBottom = height - insets.bottom;
+    const top = insets.top + 14;
+
     this.vignette.setDisplaySize(width, geometry.playHeight);
     this.weatherWidth = width;
     this.weatherHeight = geometry.playHeight;
 
     this.band.clear();
-    this.band.fillStyle(0x0a0306, 0.97);
-    this.band.fillRect(0, bandTop, width, geometry.band);
-    this.band.fillStyle(0x1a0609, 1);
-    this.band.fillRect(0, bandTop, width, 4);
-    this.band.fillStyle(0xff2f45, 0.5);
+    this.band.fillStyle(0x0b0509, 0.97);
+    this.band.fillRect(0, bandTop, width, bandBottom - bandTop);
+    this.band.fillStyle(0x1a0a10, 1);
+    this.band.fillRect(0, bandTop, width, 6);
+    this.band.fillStyle(COLORS.gold, 0.45);
     this.band.fillRect(0, bandTop + 1, width, 1);
 
     // Lives, top left of the playfield.
     const lifeSize = Math.min(26, Math.max(17, width * 0.062));
     this.lifeIcons.forEach((icon, index) => {
       icon.setScale(lifeSize / 96);
-      icon.setPosition(18 + lifeSize / 2 + index * (lifeSize + 7), 20 + lifeSize / 2);
+      icon.setPosition(18 + lifeSize / 2 + index * (lifeSize + 7), top + lifeSize / 2);
     });
 
     if (this.endless) {
       this.endlessText.setFontSize(Math.round(Math.max(11, lifeSize * 0.8)));
-      this.endlessText.setPosition(18, 20 + lifeSize / 2);
+      this.endlessText.setPosition(18, top + lifeSize / 2);
     }
 
     // Gems and clock, under the row of lives.
-    const statY = 20 + lifeSize + 18;    const statSize = Math.max(11, Math.round(lifeSize * 0.62));
+    const statY = top + lifeSize + 18;
+    const statSize = Math.max(11, Math.round(lifeSize * 0.62));
     this.gemIcon.setScale((statSize * 1.25) / 96).setPosition(22, statY);
     this.gemText.setFontSize(statSize).setPosition(34, statY);
     this.timerIcon.setScale(statSize / 96).setPosition(118, statY);
@@ -563,7 +570,7 @@ export class HudScene extends Phaser.Scene {
     // Restart, top right of the playfield: one tap away at any moment.
     const restartR = Math.min(24, Math.max(17, width * 0.055));
     const restartX = width - 18 - restartR;
-    const restartY = 20 + restartR;
+    const restartY = top + restartR;
     this.restartPad.setPosition(restartX, restartY).setScale((restartR * 2) / 128);
     this.restartIcon.setScale((restartR * 1.1) / 96).setPosition(restartX, restartY);
 
@@ -576,7 +583,7 @@ export class HudScene extends Phaser.Scene {
 
     // The end-of-level panel, centred in the playfield.
     const panelW = Math.min(width - 48, 380);
-    const panelH = Math.min(geometry.playHeight * 0.72, 260);
+    const panelH = Math.min(geometry.playHeight * 0.72, 300);
     const panelX = (width - panelW) / 2;
     const panelY = (geometry.playHeight - panelH) / 2;
 
@@ -585,7 +592,7 @@ export class HudScene extends Phaser.Scene {
     this.panel.clear();
     this.panel.fillStyle(0x12060a, 0.98);
     this.panel.fillRoundedRect(panelX, panelY, panelW, panelH, 18);
-    this.panel.lineStyle(2, 0xff2f45, 0.55);
+    this.panel.lineStyle(2, COLORS.gold, 0.5);
     this.panel.strokeRoundedRect(panelX, panelY, panelW, panelH, 18);
 
     this.titleText.setFontSize(Math.round(Math.min(26, width * 0.068)));
@@ -605,6 +612,6 @@ export class HudScene extends Phaser.Scene {
     this.mapIcon.setScale((buttonR * 1.15) / 96).setPosition(mapX, buttonY);
 
     this.levelText.setFontSize(Math.round(Math.min(17, width * 0.042)));
-    this.levelText.setPosition(width / 2, 20 + restartR * 2 + 26);
+    this.levelText.setPosition(width / 2, top + restartR * 2 + 26);
   }
 }

@@ -12,6 +12,7 @@ import { loadProgress } from '../levels/progress.js';
 import { formatTime } from '../core/format.js';
 import { sound } from '../audio/sound.js';
 import { watchPress, inCircle } from '../ui/press.js';
+import { safeInsets } from '../ui/layout.js';
 
 const FONT = '-apple-system, system-ui, sans-serif';
 
@@ -66,7 +67,7 @@ export class RecordsScene extends Phaser.Scene {
           fontFamily: FONT,
           fontSize: '10px',
           fontStyle: 'bold',
-          color: '#c49aa0'
+          color: '#a98f95'
         })
         .setOrigin(0, 0.5)
         .setDepth(3)
@@ -75,13 +76,13 @@ export class RecordsScene extends Phaser.Scene {
     this.rows = LEVELS.map((level, index) => this.createRow(level, index));
 
     // The banked gems, top right of the screen.
-    this.bankIcon = this.add.image(0, 0, 'icon-gem').setDepth(4).setTint(0x8fe8ff);
+    this.bankIcon = this.add.image(0, 0, 'icon-gem').setDepth(4).setTint(0xffffff);
     this.bankText = this.add
       .text(0, 0, String(this.bank), {
         fontFamily: FONT,
         fontSize: '14px',
         fontStyle: 'bold',
-        color: '#f6e7e9'
+        color: '#f7ecdd'
       })
       .setOrigin(1, 0.5)
       .setDepth(4);
@@ -112,7 +113,7 @@ export class RecordsScene extends Phaser.Scene {
   createRow(level, index) {
     const record = this.records[index] || null;
     const fastest = index === this.fastest;
-    const color = fastest ? '#ffd166' : record ? '#efe6dc' : '#6b5a5e';
+    const color = fastest ? '#ffd98a' : record ? '#f7ecdd' : '#8c7378';
 
     const cell = (value) =>
       this.add
@@ -144,12 +145,13 @@ export class RecordsScene extends Phaser.Scene {
     this.drawBackdrop(width, height);
 
     const margin = Math.max(10, Math.min(width, height) * 0.035);
+    const insets = safeInsets();
 
     // Top corner controls: the way back to the map on the left, the gems on the
-    // right.
+    // right. Both sit below the notch.
     const padSize = Math.max(17, Math.min(30, height * 0.075));
     const padX = margin + padSize;
-    const padY = margin + padSize;
+    const padY = insets.top + margin + padSize;
 
     this.mapPad.setPosition(padX, padY).setScale((padSize * 2) / 128);
     this.mapIcon.setScale((padSize * 1.05) / 96).setPosition(padX, padY);

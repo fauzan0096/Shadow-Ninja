@@ -106,31 +106,64 @@ export class TouchControls {
     const { width, height } = gameSize;
     if (!width || !height) return;
 
-    const { band } = computeLayout(width, height);
-    // Seven pads have to fit across a narrow phone, so the radius is capped by
-    // the width of the band as well as by its height.
-    const radius = Math.min(padRadius(band), (width - 16) / 16.5);
-    const centreY = height - band * 0.5;
-    const inset = Math.max(10, radius * 0.4);
+    const geometry = computeLayout(width, height);
+    const insets = geometry.insets;
 
-    const leftX = inset + radius;
-    const rightX = leftX + radius * 2.15;
-    const attackX = width - inset - radius;
+    // The band runs from the bottom of the playfield down to the home gesture.
+    const bandTop = geometry.playHeight;
+    const bandBottom = height - insets.bottom;
+    const bandHeight = Math.max(64, bandBottom - bandTop);
 
-    const positions = {
-      left: leftX,
-      right: rightX
-    };
+    // A phone held upright is narrow: seven pads in one row would be too small
+    // for a thumb, so they are split into a row of the controls used every
+    // second and a shorter row of the rarer ones above it.
+    const narrow = width < 560;
 
-    // The right-hand pads close up when one of them is taken away, so a fighter
-    // without a block still has an even row under the thumb.
-    const rightDirs = ['attack', 'jump', 'dash', 'block', 'shuriken'].filter(
-      (dir) => !this.hiddenDirs.has(dir)
-    );
-    rightDirs.forEach((dir, index) => {
-      positions[dir] = attackX - index * radius * 2.15;
-    });
+    const side = Math.max(10, Math.min(18, width * 0.035));
+
+    const radius = narrow
+      ? Math.min((bandHeight - 8) / 4.3, (width - side * 2) / 9.6, 44)
+      : Math.min(padRadius(geometry.band), (width - 16) / 16.5);
+
+    const slot = (x, y) => ({ x, y });
+    const positions = {};
+
+    if (narrow) {
+      const step = radius * 2.05;
+      const bottomY = bandBottom - 8 - radius;
+      const topY = bottomY - radius * 2.1;
+
+      // Left thumb: the two directions, side by side at the bottom.
+      positions.left = slot(side + radius, bottomY);
+      positions.right = slot(side + radius + step, bottomY);
+
+      // Right thumb: jump and attack at the bottom, the rarer actions above.
+      positions.jump = slot(width - side - radius - step, bottomY);
+      positions.attack = slot(width - side - radius, bottomY);
+
+      positions.dash = slot(width - side - radius, topY);
+      positions.block = slot(width - side - radius - step, topY);
+      positions.shuriken = slot(width - side - radius - step * 2, topY);
+    } else {
+      const centreY = bandTop + bandHeight * 0.5;
+      const inset = Math.max(10, radius * 0.4);
+      const attackX = width - side - radius - (inset - side);
+
+      positions.left = slot(side + radius, centreY);
+      positions.right = slot(side + radius + radius * 2.15, centreY);
+
+      // The right-hand pads close up when one of them is taken away, so a
+      // fighter without a block still has an even row under the thumb.
+      const rightDirs = ['attack', 'jump', 'dash', 'block', 'shuriken'].filter(
+        (dir) => !this.hiddenDirs.has(dir)
+      );
+      rightDirs.forEach((dir, index) => {
+        positions[dir] = slot(attackX - index * radius * 2.15, centreY);
+      });
+    }
+
     const padScale = (radius * 2) / 128;
+    const parked = positions.attack || slot(width - side - radius, bandBottom - 8 - radius);
 
     for (const dir of DIRECTIONS) {
       const button = this.buttons[dir];
@@ -138,9 +171,9 @@ export class TouchControls {
       button.iconScale = (radius * 1.15) / 96;
 
       // A pad whose row closed up stays parked under its neighbour, hidden.
-      const x = positions[dir] !== undefined ? positions[dir] : attackX;
-      button.pad.setScale(padScale).setPosition(x, centreY);
-      button.icon.setScale(button.iconScale).setPosition(x, centreY);
+      const spot = positions[dir] || parked;
+      button.pad.setScale(padScale).setPosition(spot.x, spot.y);
+      button.icon.setScale(button.iconScale).setPosition(spot.x, spot.y);
     }
   }
 
