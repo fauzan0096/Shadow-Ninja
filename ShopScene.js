@@ -2,19 +2,19 @@
 // shopkeeper behind it and three upgrade cards across the front. Gems banked in
 // the levels buy a fourth life, a shorter dash recharge and a longer sword reach.
 
-import { registerIcons } from '../icons.js';
-import { buildWorldTextures } from '../art/textures.js';
-import { buildSpriteTextures } from '../art/sprites.js';
+import { registerIcons } from './icons.js';
+import { buildWorldTextures } from './textures.js';
+import { buildSpriteTextures } from './sprites.js';
 import {
   loadProgress,
   buyUpgrade,
   UPGRADE_PRICES,
   MAX_UPGRADE_LEVEL
-} from '../levels/progress.js';
-import { sound } from '../audio/sound.js';
-import { watchPress, inRect, inCircle } from '../ui/press.js';
-import { safeInsets } from '../ui/layout.js';
-import { COLORS, TEXT, drawScreenBackdrop, drawStonePanel } from '../ui/style.js';
+} from './progress.js';
+import { sound } from './sound.js';
+import { watchPress, inRect, inCircle } from './press.js';
+import { safeInsets } from './layout.js';
+import { COLORS, TEXT, drawScreenBackdrop, drawStonePanel } from './style.js';
 
 const FONT = '-apple-system, system-ui, sans-serif';
 

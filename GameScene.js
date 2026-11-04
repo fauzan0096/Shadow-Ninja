@@ -7,15 +7,15 @@
 // The camera is given only the playfield viewport (the screen above the control
 // band), so the controls can never sit on top of the action.
 
-import { LEVELS, GROUND_H, LEDGE_H } from '../levels/levels.js';
-import { markCleared, recordRun, recordEndless, loadProgress, addGems } from '../levels/progress.js';
-import { todayTrial, claimTrial } from '../levels/trial.js';
-import { buildSpriteTextures, createAnimations } from '../art/sprites.js';
-import { buildWorldTextures, buildSky } from '../art/textures.js';
-import { paintScenery, addMist, addFireflies, addEmbers } from '../art/scenery.js';
-import { weatherForLevel, weatherIntensity } from '../art/weather.js';
-import { computeLayout, VIEW } from '../ui/layout.js';
-import { sound } from '../audio/sound.js';
+import { LEVELS, GROUND_H, LEDGE_H } from './levels.js';
+import { markCleared, recordRun, recordEndless, loadProgress, addGems } from './progress.js';
+import { todayTrial, claimTrial } from './trial.js';
+import { buildSpriteTextures, createAnimations } from './sprites.js';
+import { buildWorldTextures, buildSky } from './textures.js';
+import { paintScenery, addMist, addFireflies, addEmbers } from './scenery.js';
+import { weatherForLevel, weatherIntensity } from './weather.js';
+import { computeLayout, VIEW } from './layout.js';
+import { sound } from './sound.js';
 
 const RUN_SPEED = 260;
 const RUN_ACCELERATION = 2600;

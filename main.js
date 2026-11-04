@@ -1,14 +1,14 @@
 // Entry point: the Phaser game configuration and nothing else. Gameplay lives
 // in scenes under src/scenes/.
 
-import { TitleScene } from './scenes/TitleScene.js';
-import { LevelSelectScene } from './scenes/LevelSelectScene.js';
-import { ShopScene } from './scenes/ShopScene.js';
-import { RecordsScene } from './scenes/RecordsScene.js';
-import { SettingsScene } from './scenes/SettingsScene.js';
-import { GameScene } from './scenes/GameScene.js';
-import { HudScene } from './scenes/HudScene.js';
-import { watchOrientation } from './ui/orientation.js';
+import { TitleScene } from './TitleScene.js';
+import { LevelSelectScene } from './LevelSelectScene.js';
+import { ShopScene } from './ShopScene.js';
+import { RecordsScene } from './RecordsScene.js';
+import { SettingsScene } from './SettingsScene.js';
+import { GameScene } from './GameScene.js';
+import { HudScene } from './HudScene.js';
+import { watchOrientation } from './orientation.js';
 
 // On window so the running game can be inspected from outside the module graph.
 window.game = new Phaser.Game({

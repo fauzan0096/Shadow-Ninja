@@ -1,7 +1,7 @@
 {
   "name": "Shadow Ninja",
-  "version": "0.5.0",
-  "entry": "play.html",
+  "version": "0.6.0",
+  "entry": "index.html",
   "engine": "phaser 4.2.1",
   "orientation": "landscape"
 }

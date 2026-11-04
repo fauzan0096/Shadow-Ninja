@@ -5,13 +5,13 @@
 // It runs as its own scene over GameScene so its camera covers the whole screen
 // while the game camera keeps to the playfield above the band.
 
-import { registerIcons } from '../icons.js';
-import { TouchControls } from '../ui/TouchControls.js';
-import { computeLayout } from '../ui/layout.js';
-import { COLORS } from '../ui/style.js';
-import { sound } from '../audio/sound.js';
-import { formatTime } from '../core/format.js';
-import { weatherIntensity } from '../art/weather.js';
+import { registerIcons } from './icons.js';
+import { TouchControls } from './TouchControls.js';
+import { computeLayout } from './layout.js';
+import { COLORS } from './style.js';
+import { sound } from './sound.js';
+import { formatTime } from './format.js';
+import { weatherIntensity } from './weather.js';
 
 const FONT = '-apple-system, system-ui, sans-serif';
 

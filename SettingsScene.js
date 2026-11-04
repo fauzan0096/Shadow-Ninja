@@ -4,19 +4,19 @@
 // It is drawn in the same stone-and-gold as every other menu, and it reads the
 // raw press as well as Phaser's own hit test so a tap always answers.
 
-import { registerIcons } from '../icons.js';
-import { buildWorldTextures } from '../art/textures.js';
-import { sound } from '../audio/sound.js';
-import { watchPress, inRect, inCircle } from '../ui/press.js';
-import { safeInsets } from '../ui/layout.js';
+import { registerIcons } from './icons.js';
+import { buildWorldTextures } from './textures.js';
+import { sound } from './sound.js';
+import { watchPress, inRect, inCircle } from './press.js';
+import { safeInsets } from './layout.js';
 import {
   COLORS,
   TEXT,
   drawScreenBackdrop,
   drawStoneButton,
   drawStonePanel
-} from '../ui/style.js';
-import { PAD_SIZES, padSizeId, setPadSize, padScale } from '../ui/settings.js';
+} from './style.js';
+import { PAD_SIZES, padSizeId, setPadSize, padScale } from './settings.js';
 
 const FONT = '-apple-system, system-ui, sans-serif';
 

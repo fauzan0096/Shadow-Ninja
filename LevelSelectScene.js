@@ -5,15 +5,15 @@
 // are remembered between sessions. The map is where the game starts, and where a
 // finished run comes back to.
 
-import { registerIcons } from '../icons.js';
-import { buildSpriteTextures } from '../art/sprites.js';
-import { LEVELS } from '../levels/levels.js';
-import { loadProgress, isUnlocked, setHero } from '../levels/progress.js';
-import { todayTrial } from '../levels/trial.js';
-import { sound } from '../audio/sound.js';
-import { formatTime } from '../core/format.js';
-import { watchPress, inRect, inCircle } from '../ui/press.js';
-import { safeInsets } from '../ui/layout.js';
+import { registerIcons } from './icons.js';
+import { buildSpriteTextures } from './sprites.js';
+import { LEVELS } from './levels.js';
+import { loadProgress, isUnlocked, setHero } from './progress.js';
+import { todayTrial } from './trial.js';
+import { sound } from './sound.js';
+import { formatTime } from './format.js';
+import { watchPress, inRect, inCircle } from './press.js';
+import { safeInsets } from './layout.js';
 
 const FONT = '-apple-system, system-ui, sans-serif';
 

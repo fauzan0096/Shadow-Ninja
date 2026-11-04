@@ -1,18 +1,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>Shadow Ninja</title>
-<link rel="stylesheet" href="styles/main.css?v=0.5.0">
+<link rel="icon" href="icon.png">
+<link rel="stylesheet" href="main.css">
 
-<!-- The game itself lives in play.html. This page is only a doorway, so the
-     game always opens at an address that cannot have been cached by an older
-     copy of the project. -->
 <div id="stage"></div>
 
-<script>
-  window.location.replace('play.html?v=0.5.0');
-</script>
-
-<p style="font: 14px -apple-system, system-ui, sans-serif; color: #f7ecdd; text-align: center; margin-top: 40vh">
-  <a href="play.html?v=0.5.0" style="color: #ffd98a">Open Shadow Ninja</a>
-</p>
+<!-- Phaser is a classic script, not a module: it defines the global `Phaser`.
+     Classic scripts run before module scripts, which are deferred, so main.js
+     can rely on `Phaser` already existing without importing anything. -->
+<script src="phaser.min.js"></script>
+<script type="module" src="main.js"></script>

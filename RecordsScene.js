@@ -6,13 +6,13 @@
 // sit in the top right corner and the scroll map is one tap away in the top
 // left.
 
-import { registerIcons } from '../icons.js';
-import { LEVELS } from '../levels/levels.js';
-import { loadProgress } from '../levels/progress.js';
-import { formatTime } from '../core/format.js';
-import { sound } from '../audio/sound.js';
-import { watchPress, inCircle } from '../ui/press.js';
-import { safeInsets } from '../ui/layout.js';
+import { registerIcons } from './icons.js';
+import { LEVELS } from './levels.js';
+import { loadProgress } from './progress.js';
+import { formatTime } from './format.js';
+import { sound } from './sound.js';
+import { watchPress, inCircle } from './press.js';
+import { safeInsets } from './layout.js';
 
 const FONT = '-apple-system, system-ui, sans-serif';
 

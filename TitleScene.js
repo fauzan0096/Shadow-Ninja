@@ -2,15 +2,15 @@
 // standing by the lantern, and the two ways in — continue at the furthest roof
 // unlocked, or start again from nothing.
 
-import { registerIcons } from '../icons.js';
-import { buildWorldTextures } from '../art/textures.js';
-import { buildSpriteTextures } from '../art/sprites.js';
-import { LEVELS } from '../levels/levels.js';
-import { loadProgress, isUnlocked, resetProgress } from '../levels/progress.js';
-import { watchPress, inRect, inCircle } from '../ui/press.js';
-import { safeInsets } from '../ui/layout.js';
-import { COLORS, drawStoneButton } from '../ui/style.js';
-import { sound } from '../audio/sound.js';
+import { registerIcons } from './icons.js';
+import { buildWorldTextures } from './textures.js';
+import { buildSpriteTextures } from './sprites.js';
+import { LEVELS } from './levels.js';
+import { loadProgress, isUnlocked, resetProgress } from './progress.js';
+import { watchPress, inRect, inCircle } from './press.js';
+import { safeInsets } from './layout.js';
+import { COLORS, drawStoneButton } from './style.js';
+import { sound } from './sound.js';
 
 const FONT = '-apple-system, system-ui, sans-serif';
 
@@ -167,7 +167,7 @@ export class TitleScene extends Phaser.Scene {
     // The build running on screen, in the corner: if this is missing from the
     // title, the game being played is not this copy.
     this.buildText = this.add
-      .text(0, 0, 'v0.5.0', {
+      .text(0, 0, 'v0.6.0', {
         fontFamily: FONT,
         fontSize: '10px',
         color: '#6b5a5e'

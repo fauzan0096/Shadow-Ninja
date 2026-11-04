@@ -9,7 +9,7 @@
 // decoding it throws InvalidCharacterError on the WebKit runtime, uncaught,
 // and kills the game before the first frame.
 
-import { SYMBOLS } from '../vendor/symbols.js';
+import { SYMBOLS } from './symbols.js';
 
 /// One symbol as an SVG data URI, for DOM overlays only (e.g. CSS
 /// `background-image`). Do NOT hand this to `scene.load.svg` — see above.
