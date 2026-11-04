@@ -164,6 +164,17 @@ export class TitleScene extends Phaser.Scene {
       .setDepth(6)
       .setAlpha(0);
 
+    // The build running on screen, in the corner: if this is missing from the
+    // title, the game being played is not this copy.
+    this.buildText = this.add
+      .text(0, 0, 'v0.3.0', {
+        fontFamily: FONT,
+        fontSize: '10px',
+        color: '#6b5a5e'
+      })
+      .setOrigin(0, 0.5)
+      .setDepth(6);
+
     this.applyMute(sound.isMuted());
 
     this.scale.on('resize', this.layout, this);
@@ -303,6 +314,9 @@ export class TitleScene extends Phaser.Scene {
 
     this.toast.setFontSize(Math.max(10, Math.round(width * 0.028)));
     this.toast.setPosition(width / 2, muteY - 18);
+
+    this.buildText.setFontSize(Math.max(9, Math.round(width * 0.024)));
+    this.buildText.setPosition(14, height - insets.bottom - 14);
   }
 
   /// A dark stone button with the palace's gold hairline.
