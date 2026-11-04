@@ -5,13 +5,94 @@
 <meta name="full-screen" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Shadow Ninja</title>
-<link rel="icon" href="icon.png">
-<link rel="stylesheet" href="main.css">
+<link rel="icon" href="icon.png?v=0.8.0">
+<link rel="stylesheet" href="main.css?v=0.8.0">
 
 <div id="stage"></div>
+
+<!-- Every file is versioned below: a browser holding an old copy of the game
+     must fetch these again the moment this number changes, so a reload can
+     never leave a stale scene or an old layout running. -->
+<script type="importmap">
+  {
+    "imports": {
+      "/main.js": "/main.js?v=0.8.0",
+      "/TitleScene.js": "/TitleScene.js?v=0.8.0",
+      "/LevelSelectScene.js": "/LevelSelectScene.js?v=0.8.0",
+      "/ShopScene.js": "/ShopScene.js?v=0.8.0",
+      "/RecordsScene.js": "/RecordsScene.js?v=0.8.0",
+      "/SettingsScene.js": "/SettingsScene.js?v=0.8.0",
+      "/GameScene.js": "/GameScene.js?v=0.8.0",
+      "/HudScene.js": "/HudScene.js?v=0.8.0",
+      "/TouchControls.js": "/TouchControls.js?v=0.8.0",
+      "/layout.js": "/layout.js?v=0.8.0",
+      "/orientation.js": "/orientation.js?v=0.8.0",
+      "/press.js": "/press.js?v=0.8.0",
+      "/settings.js": "/settings.js?v=0.8.0",
+      "/style.js": "/style.js?v=0.8.0",
+      "/icons.js": "/icons.js?v=0.8.0",
+      "/haptics.js": "/haptics.js?v=0.8.0",
+      "/theme.js": "/theme.js?v=0.8.0",
+      "/textures.js": "/textures.js?v=0.8.0",
+      "/sprites.js": "/sprites.js?v=0.8.0",
+      "/smooth.js": "/smooth.js?v=0.8.0",
+      "/scenery.js": "/scenery.js?v=0.8.0",
+      "/weather.js": "/weather.js?v=0.8.0",
+      "/palette.js": "/palette.js?v=0.8.0",
+      "/sound.js": "/sound.js?v=0.8.0",
+      "/levels.js": "/levels.js?v=0.8.0",
+      "/progress.js": "/progress.js?v=0.8.0",
+      "/trial.js": "/trial.js?v=0.8.0",
+      "/format.js": "/format.js?v=0.8.0",
+      "/PixelRenderer.js": "/PixelRenderer.js?v=0.8.0",
+      "/symbols.js": "/symbols.js?v=0.8.0"
+    }
+  }
+</script>
 
 <!-- Phaser is a classic script, not a module: it defines the global `Phaser`.
      Classic scripts run before module scripts, which are deferred, so main.js
      can rely on `Phaser` already existing without importing anything. -->
 <script src="phaser.min.js"></script>
-<script type="module" src="main.js"></script>
+<script type="module" src="main.js?v=0.8.0"></script>
+
+<!-- The service worker keeps the game playable offline and swaps in a new build
+     the moment it exists, so an old copy can never hold the screen. On the very
+     first visit it claims the page; afterwards a new worker reloads once by
+     itself. -->
+<script>
+  (function () {
+    if (!('serviceWorker' in navigator)) return;
+
+    var hadController = Boolean(navigator.serviceWorker.controller);
+
+    window.addEventListener('load', function () {
+      navigator.serviceWorker
+        .register('sw.js', { updateViaCache: 'none' })
+        .then(function (registration) {
+          registration.update();
+
+          registration.addEventListener('updatefound', function () {
+            var worker = registration.installing;
+            if (!worker) return;
+
+            worker.addEventListener('statechange', function () {
+              if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                worker.postMessage('SKIP_WAITING');
+              }
+            });
+          });
+        })
+        .catch(function () {
+          // Private mode or an old browser: the game runs as it always has.
+        });
+
+      var reloading = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (!hadController || reloading) return;
+        reloading = true;
+        window.location.reload();
+      });
+    });
+  })();
+</script>
