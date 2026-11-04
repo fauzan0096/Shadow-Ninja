@@ -7,6 +7,7 @@
 // areas — the notch and the home gesture — are kept clear of both.
 
 import { padScale } from './settings.js';
+import { isRotated } from './orientation.js';
 
 export const VIEW = {
   // Never show more than this much world across the playfield, or the ninja
@@ -26,8 +27,11 @@ function cssPixels(name, fallback) {
   return Number.isFinite(value) ? value : fallback;
 }
 
-/// The space the notch and the home gesture take, in pixels.
+/// The space the notch and the home gesture take, in pixels. A turned canvas
+/// already keeps its own edges away from them, so nothing is held back there.
 export function safeInsets() {
+  if (isRotated()) return { top: 0, bottom: 0 };
+
   return {
     top: cssPixels('--safe-top', 0),
     bottom: cssPixels('--safe-bottom', 0)
