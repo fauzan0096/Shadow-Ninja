@@ -445,6 +445,7 @@ export class HudScene extends Phaser.Scene {
 
         if (summary.newTime) hint += '\nNew best time';
         if (summary.newGems) hint += summary.newTime ? '  ·  New gem record' : '\nNew gem record';
+        hint += this.trialLine(summary);
       }
 
       this.showOverlay('Level cleared', hint);
@@ -460,6 +461,7 @@ export class HudScene extends Phaser.Scene {
       }
 
       message += '\nA kunoichi waits on the map — tap her to run.';
+      message += this.trialLine(this.runSummary);
 
       this.showOverlay('Victory', message);
     } else {
@@ -472,6 +474,21 @@ export class HudScene extends Phaser.Scene {
     this.hintText.setText(hint);
     this.setOverlayVisible(true);
     this.layout(this.scale.gameSize);
+  }
+
+  /// The daily trial's marks and purse, under the run's own numbers.
+  trialLine(summary) {
+    const trial = summary && summary.trial;
+    if (!trial) return '';
+
+    const marks =
+      `\nTrial: ${formatTime(summary.seconds)} / ${formatTime(trial.timeTarget)}  ·  ` +
+      `${summary.gems} / ${trial.gemTarget} gems`;
+
+    if (trial.claimed) return `${marks}\nTrial cleared — +${trial.reward} gems`;
+    if (trial.alreadyClaimed) return `${marks}\nTrial purse already taken today`;
+
+    return `${marks}\nTrial missed — run it again`;
   }
 
   restartLevel() {

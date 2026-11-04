@@ -9,6 +9,7 @@
 
 import { LEVELS, GROUND_H, LEDGE_H } from '../levels/levels.js';
 import { markCleared, recordRun, recordEndless, loadProgress, addGems } from '../levels/progress.js';
+import { todayTrial, claimTrial } from '../levels/trial.js';
 import { buildSpriteTextures, createAnimations } from '../art/sprites.js';
 import { buildWorldTextures, buildSky } from '../art/textures.js';
 import { paintScenery, addMist, addFireflies, addEmbers } from '../art/scenery.js';
@@ -140,6 +141,11 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.level = LEVELS[this.levelIndex];
+
+    // A daily trial run carries the day's targets, and pays out once they are
+    // both met.
+    this.trial = Boolean(payload.trial) && !this.endless;
+    this.trialInfo = this.trial ? todayTrial() : null;
   }
 
   create() {
@@ -2105,6 +2111,32 @@ export class GameScene extends Phaser.Scene {
       deaths: stats.deaths
     });
 
+    // The daily trial: both marks in one run, and the purse for the day.
+    let trial = null;
+
+    if (this.trialInfo) {
+      const info = this.trialInfo;
+      const metTime = stats.seconds <= info.timeTarget;
+      const metGems = stats.gems >= info.gemTarget;
+      const alreadyClaimed = Boolean(info.claimed);
+      const claimed = metTime && metGems && !alreadyClaimed && claimTrial(info);
+
+      if (claimed) {
+        addGems(info.reward);
+        info.claimed = true;
+      }
+
+      trial = {
+        timeTarget: info.timeTarget,
+        gemTarget: info.gemTarget,
+        reward: info.reward,
+        metTime,
+        metGems,
+        alreadyClaimed,
+        claimed
+      };
+    }
+
     this.registry.set('runSummary', {
       gems: stats.gems,
       total: stats.total,
@@ -2113,7 +2145,8 @@ export class GameScene extends Phaser.Scene {
       bestTime: best.time,
       bestGems: best.gems,
       newTime: best.newTime,
-      newGems: best.newGems
+      newGems: best.newGems,
+      trial
     });
 
     sound.stopMusic();

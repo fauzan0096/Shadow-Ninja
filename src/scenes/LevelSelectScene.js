@@ -9,6 +9,7 @@ import { registerIcons } from '../icons.js';
 import { buildSpriteTextures } from '../art/sprites.js';
 import { LEVELS } from '../levels/levels.js';
 import { loadProgress, isUnlocked, setHero } from '../levels/progress.js';
+import { todayTrial } from '../levels/trial.js';
 import { sound } from '../audio/sound.js';
 import { formatTime } from '../core/format.js';
 import { watchPress, inRect, inCircle } from '../ui/press.js';
@@ -25,7 +26,7 @@ export class LevelSelectScene extends Phaser.Scene {
     if (this.scene.isActive('Game')) this.scene.stop('Game');
     if (this.scene.isActive('Hud')) this.scene.stop('Hud');
 
-    registerIcons(this, ['lock', 'gem', 'trophy']);
+    registerIcons(this, ['lock', 'gem', 'trophy', 'calendar']);
 
     buildSpriteTextures(this);
 
@@ -34,6 +35,9 @@ export class LevelSelectScene extends Phaser.Scene {
     this.records = progress.records || {};
     this.bank = progress.gems;
     this.hero = progress.hero === 'kunoichi' ? 'kunoichi' : 'ninja';
+
+    // Today's trial, marked on its roof for the rest of the day.
+    this.trial = todayTrial();
 
     this.backdrop = this.add.graphics();
     this.path = this.add.graphics();
@@ -136,6 +140,19 @@ export class LevelSelectScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setVisible(false);
 
+    // The daily trial's calendar, and what its targets and purse are.
+    const trialBadge = this.add
+      .image(0, 0, 'icon-calendar')
+      .setTint(0xffd98a)
+      .setDepth(2)
+      .setVisible(false);
+
+    const trialLine = this.add
+      .text(0, 0, '', { fontFamily: FONT, fontSize: '9px', color: '#ffd98a' })
+      .setOrigin(0.5)
+      .setDepth(2)
+      .setVisible(false);
+
     const zone = this.add.zone(0, 0, 40, 40).setInteractive();
     zone.on('pointerdown', () => this.pick(index));
 
@@ -144,6 +161,8 @@ export class LevelSelectScene extends Phaser.Scene {
       label,
       lock,
       record,
+      trialBadge,
+      trialLine,
       zone,
       index,
       name: level.name,
@@ -226,7 +245,7 @@ export class LevelSelectScene extends Phaser.Scene {
       return;
     }
 
-    this.scene.start('Game', { level: index });
+    this.scene.start('Game', { level: index, trial: this.trial.index === index });
   }
 
   layout(gameSize) {
@@ -292,6 +311,34 @@ export class LevelSelectScene extends Phaser.Scene {
           .setVisible(true);
       } else {
         node.record.setVisible(false);
+      }
+
+      // Today's trial roof carries a calendar and its targets on the node.
+      const isTrial = this.trial.index === node.index;
+
+      if (isTrial) {
+        node.ring.setStrokeStyle(3, 0xffd98a, 1);
+        node.trialBadge
+          .setVisible(true)
+          .setScale((radius * 0.52) / 96)
+          .setPosition(x + radius * 0.76, y - radius * 0.76);
+
+        node.trialLine
+          .setText(
+            this.trial.claimed
+              ? 'Trial reward claimed'
+              : `${formatTime(this.trial.timeTarget)} · ${this.trial.gemTarget} gems · +${
+                  this.trial.reward
+                }`
+          )
+          .setFontSize(Math.max(8, Math.round(radius * 0.32)))
+          .setPosition(x, y + radius + Math.max(9, radius * 0.34))
+          .setVisible(true);
+
+        node.record.setVisible(false);
+      } else {
+        node.trialBadge.setVisible(false);
+        node.trialLine.setVisible(false);
       }
 
       node.zone.setPosition(x, y).setSize(radius * 2.1, radius * 2.1);
