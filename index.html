@@ -5,8 +5,8 @@
 <meta name="full-screen" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Shadow Ninja</title>
-<link rel="icon" href="icon.png?v=0.9.0">
-<link rel="stylesheet" href="main.css?v=0.9.0">
+<link rel="icon" href="icon.png?v=0.10.0">
+<link rel="stylesheet" href="main.css?v=0.10.0">
 
 <div id="stage"></div>
 
@@ -16,36 +16,36 @@
 <script type="importmap">
   {
     "imports": {
-      "/main.js": "/main.js?v=0.9.0",
-      "/TitleScene.js": "/TitleScene.js?v=0.9.0",
-      "/LevelSelectScene.js": "/LevelSelectScene.js?v=0.9.0",
-      "/ShopScene.js": "/ShopScene.js?v=0.9.0",
-      "/RecordsScene.js": "/RecordsScene.js?v=0.9.0",
-      "/SettingsScene.js": "/SettingsScene.js?v=0.9.0",
-      "/GameScene.js": "/GameScene.js?v=0.9.0",
-      "/HudScene.js": "/HudScene.js?v=0.9.0",
-      "/TouchControls.js": "/TouchControls.js?v=0.9.0",
-      "/layout.js": "/layout.js?v=0.9.0",
-      "/orientation.js": "/orientation.js?v=0.9.0",
-      "/press.js": "/press.js?v=0.9.0",
-      "/settings.js": "/settings.js?v=0.9.0",
-      "/style.js": "/style.js?v=0.9.0",
-      "/icons.js": "/icons.js?v=0.9.0",
-      "/haptics.js": "/haptics.js?v=0.9.0",
-      "/theme.js": "/theme.js?v=0.9.0",
-      "/textures.js": "/textures.js?v=0.9.0",
-      "/sprites.js": "/sprites.js?v=0.9.0",
-      "/smooth.js": "/smooth.js?v=0.9.0",
-      "/scenery.js": "/scenery.js?v=0.9.0",
-      "/weather.js": "/weather.js?v=0.9.0",
-      "/palette.js": "/palette.js?v=0.9.0",
-      "/sound.js": "/sound.js?v=0.9.0",
-      "/levels.js": "/levels.js?v=0.9.0",
-      "/progress.js": "/progress.js?v=0.9.0",
-      "/trial.js": "/trial.js?v=0.9.0",
-      "/format.js": "/format.js?v=0.9.0",
-      "/PixelRenderer.js": "/PixelRenderer.js?v=0.9.0",
-      "/symbols.js": "/symbols.js?v=0.9.0"
+      "/main.js": "/main.js?v=0.10.0",
+      "/TitleScene.js": "/TitleScene.js?v=0.10.0",
+      "/LevelSelectScene.js": "/LevelSelectScene.js?v=0.10.0",
+      "/ShopScene.js": "/ShopScene.js?v=0.10.0",
+      "/RecordsScene.js": "/RecordsScene.js?v=0.10.0",
+      "/SettingsScene.js": "/SettingsScene.js?v=0.10.0",
+      "/GameScene.js": "/GameScene.js?v=0.10.0",
+      "/HudScene.js": "/HudScene.js?v=0.10.0",
+      "/TouchControls.js": "/TouchControls.js?v=0.10.0",
+      "/layout.js": "/layout.js?v=0.10.0",
+      "/orientation.js": "/orientation.js?v=0.10.0",
+      "/press.js": "/press.js?v=0.10.0",
+      "/settings.js": "/settings.js?v=0.10.0",
+      "/style.js": "/style.js?v=0.10.0",
+      "/icons.js": "/icons.js?v=0.10.0",
+      "/haptics.js": "/haptics.js?v=0.10.0",
+      "/theme.js": "/theme.js?v=0.10.0",
+      "/textures.js": "/textures.js?v=0.10.0",
+      "/sprites.js": "/sprites.js?v=0.10.0",
+      "/smooth.js": "/smooth.js?v=0.10.0",
+      "/scenery.js": "/scenery.js?v=0.10.0",
+      "/weather.js": "/weather.js?v=0.10.0",
+      "/palette.js": "/palette.js?v=0.10.0",
+      "/sound.js": "/sound.js?v=0.10.0",
+      "/levels.js": "/levels.js?v=0.10.0",
+      "/progress.js": "/progress.js?v=0.10.0",
+      "/trial.js": "/trial.js?v=0.10.0",
+      "/format.js": "/format.js?v=0.10.0",
+      "/PixelRenderer.js": "/PixelRenderer.js?v=0.10.0",
+      "/symbols.js": "/symbols.js?v=0.10.0"
     }
   }
 </script>
@@ -54,7 +54,7 @@
      Classic scripts run before module scripts, which are deferred, so main.js
      can rely on `Phaser` already existing without importing anything. -->
 <script src="phaser.min.js"></script>
-<script type="module" src="main.js?v=0.9.0"></script>
+<script type="module" src="main.js?v=0.10.0"></script>
 
 <!-- The service worker keeps the game playable offline and swaps in a new build
      the moment it exists, so an old copy can never hold the screen. On the very
@@ -103,7 +103,7 @@
      comes back with the new build, so a lagging copy heals on its own. -->
 <script>
   (function () {
-    var BUILD = '0.9.0';
+    var BUILD = '0.10.0';
     var attempts = 0;
 
     try {

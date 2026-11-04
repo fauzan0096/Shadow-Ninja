@@ -6,7 +6,7 @@
 // or no signal at all. Every cache carries the version below, and activating a
 // new worker deletes every older cache, so nothing stale can survive an update.
 
-const VERSION = '0.9.0';
+const VERSION = '0.10.0';
 const CACHE = `shadow-ninja-${VERSION}`;
 
 // Everything the game needs to open and play with no network.

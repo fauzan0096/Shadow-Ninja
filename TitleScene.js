@@ -167,7 +167,7 @@ export class TitleScene extends Phaser.Scene {
     // The build running on screen, in the corner: if this is missing from the
     // title, the game being played is not this copy.
     this.buildText = this.add
-      .text(0, 0, 'v0.9.0', {
+      .text(0, 0, 'v0.10.0', {
         fontFamily: FONT,
         fontSize: '10px',
         color: '#6b5a5e'
