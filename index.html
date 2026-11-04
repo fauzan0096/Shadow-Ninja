@@ -1,55 +1,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
 <title>Shadow Ninja</title>
-<link rel="icon" href="assets/icon.png?v=0.4.0">
-<link rel="stylesheet" href="styles/main.css?v=0.4.0">
+<link rel="stylesheet" href="styles/main.css?v=0.5.0">
 
+<!-- The game itself lives in play.html. This page is only a doorway, so the
+     game always opens at an address that cannot have been cached by an older
+     copy of the project. -->
 <div id="stage"></div>
 
-<!-- Every module under src/ is given a version below. A browser holding an old
-     copy of the game in its cache must fetch these files again the moment this
-     number changes, so a publish can never leave a stale scene on screen. -->
-<script type="importmap">
-  {
-    "imports": {
-      "/src/main.js": "/src/main.js?v=0.4.0",
-      "/src/scenes/TitleScene.js": "/src/scenes/TitleScene.js?v=0.4.0",
-      "/src/scenes/LevelSelectScene.js": "/src/scenes/LevelSelectScene.js?v=0.4.0",
-      "/src/scenes/ShopScene.js": "/src/scenes/ShopScene.js?v=0.4.0",
-      "/src/scenes/RecordsScene.js": "/src/scenes/RecordsScene.js?v=0.4.0",
-      "/src/scenes/SettingsScene.js": "/src/scenes/SettingsScene.js?v=0.4.0",
-      "/src/scenes/GameScene.js": "/src/scenes/GameScene.js?v=0.4.0",
-      "/src/scenes/HudScene.js": "/src/scenes/HudScene.js?v=0.4.0",
-      "/src/ui/TouchControls.js": "/src/ui/TouchControls.js?v=0.4.0",
-      "/src/ui/layout.js": "/src/ui/layout.js?v=0.4.0",
-      "/src/ui/orientation.js": "/src/ui/orientation.js?v=0.4.0",
-      "/src/ui/press.js": "/src/ui/press.js?v=0.4.0",
-      "/src/ui/settings.js": "/src/ui/settings.js?v=0.4.0",
-      "/src/ui/style.js": "/src/ui/style.js?v=0.4.0",
-      "/src/icons.js": "/src/icons.js?v=0.4.0",
-      "/src/haptics.js": "/src/haptics.js?v=0.4.0",
-      "/src/theme.js": "/src/theme.js?v=0.4.0",
-      "/src/art/textures.js": "/src/art/textures.js?v=0.4.0",
-      "/src/art/sprites.js": "/src/art/sprites.js?v=0.4.0",
-      "/src/art/smooth.js": "/src/art/smooth.js?v=0.4.0",
-      "/src/art/scenery.js": "/src/art/scenery.js?v=0.4.0",
-      "/src/art/weather.js": "/src/art/weather.js?v=0.4.0",
-      "/src/art/palette.js": "/src/art/palette.js?v=0.4.0",
-      "/src/audio/sound.js": "/src/audio/sound.js?v=0.4.0",
-      "/src/levels/levels.js": "/src/levels/levels.js?v=0.4.0",
-      "/src/levels/progress.js": "/src/levels/progress.js?v=0.4.0",
-      "/src/levels/trial.js": "/src/levels/trial.js?v=0.4.0",
-      "/src/core/format.js": "/src/core/format.js?v=0.4.0",
-      "/src/core/PixelRenderer.js": "/src/core/PixelRenderer.js?v=0.4.0",
-      "/vendor/symbols.js": "/vendor/symbols.js?v=0.4.0"
-    }
-  }
+<script>
+  window.location.replace('play.html?v=0.5.0');
 </script>
 
-<!-- Phaser is a classic script, not a module: it defines the global `Phaser`.
-     Classic scripts run before module scripts, which are deferred, so main.js
-     can rely on `Phaser` already existing without importing anything. -->
-<script src="vendor/phaser.min.js"></script>
-<script type="module" src="src/main.js?v=0.4.0"></script>
+<p style="font: 14px -apple-system, system-ui, sans-serif; color: #f7ecdd; text-align: center; margin-top: 40vh">
+  <a href="play.html?v=0.5.0" style="color: #ffd98a">Open Shadow Ninja</a>
+</p>
